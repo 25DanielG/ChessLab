@@ -1,3 +1,4 @@
+package src;
 // Represents a single move, in which a piece moves to a destination location.
 // Since a move can be undone, also keeps track of the source location and any captured victim.
 public class Move

@@ -1,3 +1,4 @@
+package src;
 import java.awt.*;
 
 public class Game
@@ -12,48 +13,48 @@ public class Game
     {
         Board board = new Board();
 
-        Piece blackKing = new King(Color.BLACK, "black_king.gif");
+        Piece blackKing = new King(Color.BLACK, "./img/black_king.gif");
         blackKing.putSelfInGrid(board, new Location(0, 4));
-        Piece blackQueen = new Queen(Color.BLACK, "black_queen.gif");
+        Piece blackQueen = new Queen(Color.BLACK, "./img/black_queen.gif");
         blackQueen.putSelfInGrid(board, new Location(0, 3));
-        Piece blackRookOne = new Rook(Color.BLACK, "black_rook.gif");
+        Piece blackRookOne = new Rook(Color.BLACK, "./img/black_rook.gif");
         blackRookOne.putSelfInGrid(board, new Location(0, 0));
-        Piece blackRookTwo = new Rook(Color.BLACK, "black_rook.gif");
+        Piece blackRookTwo = new Rook(Color.BLACK, "./img/black_rook.gif");
         blackRookTwo.putSelfInGrid(board, new Location(0, 7));
-        Piece blackKnightOne = new Knight(Color.BLACK, "black_knight.gif");
+        Piece blackKnightOne = new Knight(Color.BLACK, "./img/black_knight.gif");
         blackKnightOne.putSelfInGrid(board, new Location(0, 1));
-        Piece blackKnightTwo = new Knight(Color.BLACK, "black_knight.gif");
+        Piece blackKnightTwo = new Knight(Color.BLACK, "./img/black_knight.gif");
         blackKnightTwo.putSelfInGrid(board, new Location(0, 6));
-        Piece blackBishopOne = new Bishop(Color.BLACK, "black_bishop.gif");
+        Piece blackBishopOne = new Bishop(Color.BLACK, "./img/black_bishop.gif");
         blackBishopOne.putSelfInGrid(board, new Location(0, 2));
-        Piece blackBishopTwo = new Bishop(Color.BLACK, "black_bishop.gif");
+        Piece blackBishopTwo = new Bishop(Color.BLACK, "./img/black_bishop.gif");
         blackBishopTwo.putSelfInGrid(board, new Location(0, 5));
         Pawn[] blackPawns = new Pawn[8];
         for (int c = 0; c < 8; c++)
         {
-            blackPawns[c] = new Pawn(Color.BLACK, "black_pawn.gif");
+            blackPawns[c] = new Pawn(Color.BLACK, "./img/black_pawn.gif");
             blackPawns[c].putSelfInGrid(board, new Location(1, c));
         }
-        Piece whiteKing = new King(Color.WHITE, "white_king.gif");
+        Piece whiteKing = new King(Color.WHITE, "./img/white_king.gif");
         whiteKing.putSelfInGrid(board, new Location(7, 4));
-        Piece whiteQueen = new Queen(Color.WHITE, "white_queen.gif");
+        Piece whiteQueen = new Queen(Color.WHITE, "./img/white_queen.gif");
         whiteQueen.putSelfInGrid(board, new Location(7, 3));
-        Piece whiteRookOne = new Rook(Color.WHITE, "white_rook.gif");
+        Piece whiteRookOne = new Rook(Color.WHITE, "./img/white_rook.gif");
         whiteRookOne.putSelfInGrid(board, new Location(7, 0));
-        Piece whiteRookTwo = new Rook(Color.WHITE, "white_rook.gif");
+        Piece whiteRookTwo = new Rook(Color.WHITE, "./img/white_rook.gif");
         whiteRookTwo.putSelfInGrid(board, new Location(7, 7));
-        Piece whiteKnightOne = new Knight(Color.WHITE, "white_knight.gif");
+        Piece whiteKnightOne = new Knight(Color.WHITE, "./img/white_knight.gif");
         whiteKnightOne.putSelfInGrid(board, new Location(7, 1));
-        Piece whiteKnightTwo = new Knight(Color.WHITE, "white_knight.gif");
+        Piece whiteKnightTwo = new Knight(Color.WHITE, "./img/white_knight.gif");
         whiteKnightTwo.putSelfInGrid(board, new Location(7, 6));
-        Piece whiteBishopOne = new Bishop(Color.WHITE, "white_bishop.gif");
+        Piece whiteBishopOne = new Bishop(Color.WHITE, "./img/white_bishop.gif");
         whiteBishopOne.putSelfInGrid(board, new Location(7, 2));
-        Piece whiteBishopTwo = new Bishop(Color.WHITE, "white_bishop.gif");
+        Piece whiteBishopTwo = new Bishop(Color.WHITE, "./img/white_bishop.gif");
         whiteBishopTwo.putSelfInGrid(board, new Location(7, 5));
         Pawn[] whitePawns = new Pawn[8];
         for (int c = 0; c < 8; c++)
         {
-            whitePawns[c] = new Pawn(Color.WHITE, "white_pawn.gif");
+            whitePawns[c] = new Pawn(Color.WHITE, "./img/white_pawn.gif");
             whitePawns[c].putSelfInGrid(board, new Location(6, c));
         }
         BoardDisplay display = new BoardDisplay(board);
