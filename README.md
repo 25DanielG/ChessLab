@@ -1,4 +1,7 @@
-A minimax chess player w/ move ordering and alpha-beta pruning.
+A minimax chess player w/ 
+ - Move ordering
+ - Alpha-beta pruning
+ - Quiescence Search (Depth 4)
 Scoring function based on
  - Piece value
  - Pawn structure

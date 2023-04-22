@@ -61,6 +61,8 @@ public class Game
         wKing = (King) whiteKing;
         bKing = (King) blackKing;
         play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
+        // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new HumanPlayer(board, display, Color.BLACK, "Human"));
+        // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
     }
 
     /**
