@@ -29,18 +29,22 @@ public class Board extends BoundedGrid<Piece>
 		Piece victim = move.getVictim();
 		if (piece instanceof King && dest.getCol() - source.getCol() == 2)
 		{
-			Piece p = this.get(new Location(source.getRow(), source.getCol() - 1));
+			Location rookSource = new Location(dest.getRow(), dest.getCol() + 1);
+			Location rookDest = new Location(source.getRow(), source.getCol() + 1);
+			Piece p = this.get(rookDest);
 			if (p instanceof Rook)
 			{
-				p.moveTo(new Location(dest.getRow(), dest.getCol() + 1));
+				p.moveTo(rookSource);
 			}
 		}
 		else if (piece instanceof King && dest.getCol() - source.getCol() == -2)
 		{
-			Piece p = this.get(new Location(source.getRow(), source.getCol() - 1));
+			Location rookSource = new Location(dest.getRow(), dest.getCol() - 2);
+			Location rookDest = new Location(source.getRow(), source.getCol() - 1);
+			Piece p = this.get(rookDest);
 			if (p instanceof Rook)
 			{
-				p.moveTo(new Location(dest.getRow(), dest.getCol() - 2));
+				p.moveTo(rookSource);
 			}
 		}
 		piece.moveTo(source);
