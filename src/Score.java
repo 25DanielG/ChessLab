@@ -16,15 +16,7 @@ public class Score
         int queenValue = 900, kingValue = 20000;
         int centerBonus = 20, centerSquare = board.getNumRows() / 2;
         int[] centerRows = { centerSquare - 1, centerSquare, centerSquare + 1 };
-        Color opposite;
-        if (color.equals(Color.WHITE))
-        {
-            opposite = Color.BLACK;
-        }
-        else
-        {
-            opposite = Color.WHITE;
-        }
+        Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
         int botPawnStructureScore = evaluatePawnStructure(board, color);
         int oppPawnStructureScore = evaluatePawnStructure(board, opposite);
         for (int row = 0; row < board.getNumRows(); row++)
@@ -85,7 +77,7 @@ public class Score
                 }
             }
         }
-        score += ((botPawnStructureScore - oppPawnStructureScore) / 5);
+        score += ((botPawnStructureScore - oppPawnStructureScore) / 3);
         return score;
     }
 
@@ -121,7 +113,7 @@ public class Score
                     }
                     else if (isPawnChain((Pawn) piece, board))
                     {
-                        pawnStructureScore += 15;
+                        pawnStructureScore += 30;
                     }
                 }
             }

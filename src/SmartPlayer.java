@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A smart player utilizing minimax to play chess very well. The player has dynamic depth and uses
@@ -27,38 +28,65 @@ public class SmartPlayer extends Player
      */
     public Move nextMove() 
     {
-        // Object[] best = (findBestMove(5, 10000));
-        Object[] best = (valueOfBestMove(5, Integer.MIN_VALUE, Integer.MAX_VALUE));
+        Object[] best = (findBestMove(10, 5000));
         System.out.println("----------------------");
         System.out.println("Score: " + best[0]);
         System.out.println("----------------------");
         return (Move) best[1];
     }
 
+    /**
+     * Finds the best move in a current chess position by using iterative deepening by 
+     *      progressively searching the minimax tree in deeper and deeper depths to 
+     *      increase efficiency. Once the timeout is reached, the method automatically
+     *      returns from all the recursive calls.
+     * @param maxDepth the maxDepth to search the minimax tree
+     * @param timeout the timeout in milliseconds to stop the search
+     * @return Object[] index 0 containing the max score and index 1 containing the best move
+     */
     public Object[] findBestMove(int maxDepth, long timeout)
     {
         Move bestMove = null;
         int bestScore = Integer.MIN_VALUE;
-        long startTime = System.currentTimeMillis();
-        long timeLimit = startTime + timeout;
+        Object[] result = null;
+        int maxDepthReached = 0;
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
+        Thread currentThread = Thread.currentThread();
+        Thread timerThread = new Thread(() -> {
+            try
+            {
+                Thread.sleep(timeout);
+                System.out.println("Time limit reached!");
+                currentThread.interrupt();
+            }
+            catch (InterruptedException e)
+            {
+                currentThread.interrupt();
+            }
+        });
+        timerThread.start();
         for (int depth = 1; depth <= maxDepth; depth++)
         {
-            Object[] result = valueOfBestMove(depth, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            if (System.currentTimeMillis() >= timeLimit)
+            if (result != null)
             {
-                System.out.println("Exceeded time limit when searching of: " + (timeLimit / 1000) + " seconds");
-                break;
+                alpha = bestScore - 1000;
+                beta = bestScore + 1000;
             }
-            int score = (int) result[0];
-            Move move = (Move) result[1];
-            if (score > bestScore)
+            result = valueOfBestMove(depth, alpha, beta);
+            if (result != null)
             {
-                bestScore = score;
+                int score = (int) result[0];
+                Move move = (Move) result[1];
+                maxDepthReached = depth;
                 bestMove = move;
+                bestScore = score;
             }
         }
-        return new Object[] {bestScore, bestMove};
-    }
+        timerThread.interrupt();
+        System.out.println("Parsed tree with depth: " + maxDepthReached);
+        return new Object[]{bestScore, bestMove};
+    }    
     
     /**
      * Finds the value of the worst response that can be returned to the smartest player by looking
@@ -71,7 +99,7 @@ public class SmartPlayer extends Player
      * @return Object[] the 0 index containing the min score and the 1 indexx containing the best
      *      move
      */
-    private Object[] valueOfMeanestResponse(int depth, int alpha, int beta) 
+    private Object[] valueOfMeanestResponse(int depth, int alpha, int beta)
     {
         if (depth <= 0)
         {
@@ -93,6 +121,11 @@ public class SmartPlayer extends Player
         {
             getBoard().executeMove(move);
             Object[] p = valueOfBestMove(depth - 1, alpha, beta);
+            if (p == null)
+            {
+                getBoard().undoMove(move);
+                return null;
+            }
             if ((int) (p[0]) < min)
             {
                 min = (int) (p[0]);
@@ -121,10 +154,15 @@ public class SmartPlayer extends Player
      * @return Object[] the 0 index containing the max score and the 1 indexx containing the best
      *      move
      */
-    private Object[] valueOfBestMove(int depth, int alpha, int beta) {
+    private Object[] valueOfBestMove(int depth, int alpha, int beta)
+    {
         if (depth <= 0)
         {
             return new Object[] {Score.score(getBoard(), getColor()), null};
+        }
+        if (Thread.currentThread().isInterrupted())
+        {
+            return null;
         }
     
         ArrayList<Move> moves = getBoard().strategicMoves(getColor());
@@ -143,6 +181,11 @@ public class SmartPlayer extends Player
         {
             getBoard().executeMove(move);
             Object[] p = valueOfMeanestResponse(depth - 1, alpha, beta);
+            if (p == null)
+            {
+                getBoard().undoMove(move);
+                return null;
+            }
             int score = (int) p[0];
             if (score > max)
             {
