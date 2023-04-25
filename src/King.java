@@ -40,6 +40,11 @@ public class King extends Piece
     @Override
     public ArrayList<Location> destinations()
     {
+        return illegalDestinations();
+    }
+
+    public ArrayList<Location> illegalDestinations()
+    {
         ArrayList<Location> destinations = new ArrayList<Location>();
         for (int i = 0; i < offset.length; i++)
         {

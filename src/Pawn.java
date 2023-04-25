@@ -34,6 +34,13 @@ public class Pawn extends Piece
     @Override
     public ArrayList<Location> destinations()
     {
+        ArrayList<Location> destinations = illegalDestinations();
+        removeIllegalMoves(destinations);
+        return destinations;
+    }
+
+    public ArrayList<Location> illegalDestinations()
+    {
         ArrayList<Location> destinations = new ArrayList<Location>();
         Location up, twoUp, upLeft, upRight;
         if (getColor().equals(Color.BLACK))

@@ -78,22 +78,44 @@ public class Board extends BoundedGrid<Piece>
 	 */
 	public Vector<Move> allMoves(Color color)
 	{
-		ArrayList<Location> occupied = getOccupiedLocations();
-		Vector<Move> moves = new Vector<Move>();
-		occupied.parallelStream().forEach(location ->
-		{
-			Piece cur = get(location);
-			if (cur.getColor().equals(color))
-			{
-				for (Location to : cur.destinations())
+        ArrayList<Location> occupied = getOccupiedLocations();
+        Vector<Move> moves = new Vector<Move>();
+        for (Location l : occupied)
+        {
+            Piece cur = get(l);
+            if (cur.getColor().equals(color))
+            {
+                for (Location to : cur.destinations())
 				{
-					Move move = new Move(cur, to, calculateMoveScore(new Move(cur, to)));
-					moves.add(move);
+                    moves.add(new Move(cur, to));
 				}
-			}
-		});
-		return moves;
-	}	
+            }
+        }
+        return moves;
+    }
+
+	/**
+	 * Returns all possible moves in a chess board by looping through all pieces and their possible moves.
+	 * @param color the color of the pieces to look for all possible moves
+	 * @return type ArrayList<Move> the list of all possible moves
+	 */
+	public Vector<Move> allIllegalMoves(Color color)
+	{
+        ArrayList<Location> occupied = getOccupiedLocations();
+        Vector<Move> moves = new Vector<Move>();
+        for (Location l : occupied)
+        {
+            Piece cur = get(l);
+            if (cur.getColor().equals(color))
+            {
+                for (Location to : cur.illegalDestinations())
+				{
+                    moves.add(new Move(cur, to));
+				}
+            }
+        }
+        return moves;
+    }
 
 	/**
 	 * Returns all strategic possible moves in a chess board by looping through all pieces and

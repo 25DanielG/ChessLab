@@ -2,6 +2,7 @@ package src;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Vector;
 
 /**
  * A class that describes the Bishop piece of a chess set. It overrides a method
@@ -33,6 +34,13 @@ public class Bishop extends Piece
      */
     @Override
     public ArrayList<Location> destinations()
+    {
+        ArrayList<Location> destinations = illegalDestinations();
+        removeIllegalMoves(destinations);
+        return destinations;
+    }
+
+    public ArrayList<Location> illegalDestinations()
     {
         ArrayList<Location> destinations = new ArrayList<Location>();
         sweep(destinations, Location.NORTHEAST);

@@ -28,7 +28,7 @@ public class SmartPlayer extends Player
      */
     public Move nextMove() 
     {
-        Object[] best = (findBestMove(10, 5000));
+        Object[] best = (findBestMove(10, 10000));
         System.out.println("---------------------------------");
         System.out.println("Score: " + best[0] + ", Line: " + best[2] + ", Depth: " + best[3]);
         System.out.println("---------------------------------");
@@ -67,7 +67,7 @@ public class SmartPlayer extends Player
             }
         });
         timerThread.start();
-        for (int depth = 3; depth <= maxDepth; depth++)
+        for (int depth = 1; depth <= maxDepth; depth++)
         {
             long time = System.currentTimeMillis();
             result = valueOfBestMove(depth, alpha, beta);
@@ -75,7 +75,7 @@ public class SmartPlayer extends Player
             {
                 System.out.println("Ran depth " + depth + " in " + (System.currentTimeMillis() - time) + "ms");
             }
-            if (result != null)
+            if (result != null && depth > maxDepthReached)
             {
                 maxDepthReached = depth;
                 bestMove = (Move) result[1];
@@ -85,7 +85,7 @@ public class SmartPlayer extends Player
         }
         timerThread.interrupt();
         System.out.println("Parsed tree with depth: " + maxDepthReached);
-        return new Object[]{bestScore, bestMove, meanest, maxDepthReached};
+        return new Object[] {bestScore, bestMove, meanest, maxDepthReached};
     }    
     
     /**
@@ -125,13 +125,13 @@ public class SmartPlayer extends Player
                 best = move;
             }
             getBoard().undoMove(move);
-            if (min < beta)
-            {
-                beta = min;
-            }
             if (beta <= alpha)
             {
                 break;
+            }
+            if (min < beta)
+            {
+                beta = min;
             }
         }
         return new Object[] {min, best};
@@ -162,9 +162,16 @@ public class SmartPlayer extends Player
         int max = Integer.MIN_VALUE;
         Move best = null;
         Move meanest = null;
+        int previousScore = Score.quickScore(getBoard(), getColor());
         for (Move move : moves.parallelStream().toArray(Move[]::new))
         {
             getBoard().executeMove(move);
+            int quickScored = Score.quickScore(getBoard(), getColor());
+            if (previousScore - quickScored > 100)
+            {
+                getBoard().undoMove(move);
+                continue;
+            }
             Object[] p = valueOfMeanestResponse(depth - 1, alpha, beta);
             if (p == null)
             {
@@ -179,13 +186,13 @@ public class SmartPlayer extends Player
                 meanest = (Move) p[1];
             }
             getBoard().undoMove(move);
-            if (max > alpha)
-            {
-                alpha = max;
-            }
             if (beta <= alpha)
             {
                 break;
+            }
+            if (max > alpha)
+            {
+                alpha = max;
             }
         }
         // Quiescence search

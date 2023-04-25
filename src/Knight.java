@@ -39,6 +39,13 @@ public class Knight extends Piece
     @Override
     public ArrayList<Location> destinations()
     {
+        ArrayList<Location> destinations = illegalDestinations();
+        removeIllegalMoves(destinations);
+        return destinations;
+    }
+
+    public ArrayList<Location> illegalDestinations()
+    {
         ArrayList<Location> destinations = new ArrayList<Location>();
         for (int i = 0; i < offset.length; i++)
         {

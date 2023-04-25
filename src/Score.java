@@ -17,19 +17,83 @@ public class Score
         return score;
     }
 
+    public static int quickScore(Board board, Color color)
+    {
+        Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
+        int score = fastEval(board, color) - fastEval(board, opposite);
+        return score;
+    }
+
+    public static int fastEval(Board board, Color  color)
+    {
+        int score = 0;
+        int pawnValue = 100, knightValue = 300, bishopValue = 300, rookValue = 500;
+        int queenValue = 900, kingValue = 10000;
+        int pawnUndevelopped = 30, mediumUndevelopped = 70;
+        for (Location loc : board.getOccupiedLocations())
+        {
+            Piece piece = board.get(loc);
+            if (piece != null && piece.getColor().equals(color))
+            {
+                int value = 0;
+                if (piece instanceof Pawn)
+                {
+                    value = pawnValue;
+                    int startRow = color.equals(Color.WHITE) ? 6 : 1;
+                    if (piece.getLocation().getRow() == startRow)
+                    {
+                        value -= pawnUndevelopped;
+                    }
+                }
+                else if (piece instanceof Knight)
+                {
+                    value = knightValue;
+                    int startRow = color.equals(Color.WHITE) ? 7 : 0;
+                    if (piece.getLocation().getRow() == startRow)
+                    {
+                        value -= mediumUndevelopped;
+                    }
+                }
+                else if (piece instanceof Bishop)
+                {
+                    value = bishopValue;
+                    int startRow = color.equals(Color.WHITE) ? 7 : 0;
+                    if (piece.getLocation().getRow() == startRow)
+                    {
+                        value -= mediumUndevelopped;
+                    }
+                }
+                else if (piece instanceof Rook)
+                {
+                    value = rookValue;
+                }
+                else if (piece instanceof Queen)
+                {
+                    value = queenValue;
+                }
+                else if (piece instanceof King)
+                {
+                    value = kingValue;
+                }
+                score += value;
+            }
+        }
+        return score;
+    }
+
     public static int score(Board board, Color color)
     {
         int score = 0;
-        int pawnValue = 250, knightValue = 600, bishopValue = 630, rookValue = 900;
-        int queenValue = 1300, kingValue = 20000;
-        int centerBonus = 20, centerSquare = board.getNumRows() / 2;
-        int mediumUndevelopped = 75, pawnUndevelopped = 50;
+        int pawnValue = 250, knightValue = 800, bishopValue = 830, rookValue = 1400;
+        int queenValue = 2300, kingValue = 20000;
+        int centerBonus = 75, centerSquare = board.getNumRows() / 2;
+        int mediumUndevelopped = 100, pawnUndevelopped = 75;
         int[] centerRows = { centerSquare - 1, centerSquare, centerSquare + 1 };
         int curPawnStructure = evaluatePawnStructure(board, color);
         for (Location loc : board.getOccupiedLocations())
         {
             Piece piece = board.get(loc);
-            if (piece != null)
+            if (piece != null && piece.getColor().equals(color))
             {
                 int value = 0;
                 if (piece instanceof Pawn)
@@ -80,13 +144,10 @@ public class Score
                 {
                     value += centerBonus;
                 }
-                if (piece.getColor().equals(color))
-                {
-                    score += value;
-                }
+                score += value;
             }
         }
-        score += curPawnStructure;
+        score += curPawnStructure / 2;
         return score;
     }
 
@@ -274,7 +335,6 @@ public class Score
                 }
             }
         }
-    
         return false;
     }
 }

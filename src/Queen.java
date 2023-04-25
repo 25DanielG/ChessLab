@@ -34,6 +34,13 @@ public class Queen extends Piece
     @Override
     public ArrayList<Location> destinations()
     {
+        ArrayList<Location> destinations = illegalDestinations();
+        removeIllegalMoves(destinations);
+        return destinations;
+    }
+
+    public ArrayList<Location> illegalDestinations()
+    {
         ArrayList<Location> destinations = new ArrayList<Location>();
         sweep(destinations, Location.NORTH);
         sweep(destinations, Location.SOUTH);

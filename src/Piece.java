@@ -227,6 +227,8 @@ public abstract class Piece implements Cloneable
      */
     public abstract ArrayList<Location> destinations();
 
+    public abstract ArrayList<Location> illegalDestinations();
+
     /**
      * Sweeps the locations in a given direction and modifies a given ArrayList by adding
      *      all valid locations in the direction given
@@ -266,6 +268,39 @@ public abstract class Piece implements Cloneable
         catch (CloneNotSupportedException e)
         {
             throw new InternalError(e);
+        }
+    }
+
+    public boolean isKingInCheck(Move move, Color color)
+    {
+        Board board = getBoard();
+        board.executeMove(move);
+        King king = color.equals(Color.WHITE) ? Game.wKing : Game.bKing;
+        Location kingLocation = king.getLocation();
+        Vector<Move> oppMoves = board.allIllegalMoves(color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
+        for(Move m : oppMoves)
+        {
+            if(m.getDestination().equals(kingLocation))
+            {
+                board.undoMove(move);
+                return true;
+            }
+        }
+        board.undoMove(move);
+        return false;
+    }
+
+    public void removeIllegalMoves(ArrayList<Location> moves)
+    {
+        for(int i = 0; i < moves.size(); i++)
+        {
+            Location loc = moves.get(i);
+            Move m = new Move(this, loc);
+            if(isKingInCheck(m, getColor()))
+            {
+                moves.remove(i);
+                i--;
+            }
         }
     }
 }
