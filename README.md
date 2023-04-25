@@ -4,6 +4,7 @@
  - Quiescence Search (Depth 5)
  - Iterative Deepening
  - Multithreaded
+ - Fast Evaluation (removes obviously bad positions before exploration)
 
 
 #### Scoring function based on
