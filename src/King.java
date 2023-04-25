@@ -27,6 +27,11 @@ public class King extends Piece
         moved = false;
 	}
 
+    public String toString()
+    {
+        return "K";
+    }
+
     /**
      * An overrided method from the Piece abstract class which returns all the places in which a
      *      King can move on the current chess board.

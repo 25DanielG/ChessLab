@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A class that describes the Bishop piece of a chess set. It overrides a method
@@ -18,6 +19,11 @@ public class Bishop extends Piece
     public Bishop(Color col, String filename)
     {
         super(col, filename, 3);
+    }
+
+    public String toString()
+    {
+        return "B";
     }
 
     /**

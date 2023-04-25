@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A class that describes the Rook piece of a chess set. It overrides a method
@@ -37,6 +38,11 @@ public class Rook extends Piece
         sweep(destinations, Location.WEST);
         sweep(destinations, Location.EAST);
         return destinations;
+    }
+
+    public String toString()
+    {
+        return "R";
     }
 
     /**

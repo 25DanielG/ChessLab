@@ -65,10 +65,21 @@ public class Move
 		return score;
 	}
 
+	// Sets the score of the move
+	public void setScore(int score)
+	{
+		this.score = score;
+	}
+
 	// Returns a string description of the move
 	public String toString()
 	{
-		return piece + " from " + source + " to " + destination + " containing " + victim;
+		String capture = "";
+		if (victim != null)
+		{
+			capture = "x";
+		}
+		return "" + piece + capture + ((char) (97 + destination.getCol())) + (8 - destination.getRow());
 	}
 
 	// Returns true if this move is equivalent to the given one.

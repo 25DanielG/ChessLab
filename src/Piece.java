@@ -2,7 +2,7 @@ package src;
 import java.awt.*;
 import java.util.*;
 
-public abstract class Piece
+public abstract class Piece implements Cloneable
 {
 	//the board this piece is on
 	private Board board;
@@ -247,6 +247,25 @@ public abstract class Piece
             {
                 loc = null;
             }
+        }
+    }
+
+    @Override
+    public Piece clone()
+    {
+        try
+        {
+            Piece newPiece = (Piece) super.clone();
+            newPiece.color = color;
+            newPiece.location = null;
+            newPiece.board = null;
+            newPiece.imageFileName = imageFileName;
+            newPiece.value = value;
+            return newPiece;
+        }
+        catch (CloneNotSupportedException e)
+        {
+            throw new InternalError(e);
         }
     }
 }

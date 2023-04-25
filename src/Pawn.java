@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A class that describes the Pawn piece of a chess set. It overrides a method
@@ -18,6 +19,11 @@ public class Pawn extends Piece
     public Pawn(Color col, String fileName)
     {
         super(col, fileName, 1);
+    }
+
+    public String toString()
+    {
+        return "";
     }
 
     /**
@@ -50,7 +56,7 @@ public class Pawn extends Piece
         }
         if (((getColor().equals(Color.BLACK) && getLocation().getRow() == 1) 
             || (getColor().equals(Color.WHITE) && getLocation().getRow() == 6))
-            && isValidDestination(twoUp) && getBoard().get(twoUp) == null)
+            && isValidDestination(twoUp) && getBoard().get(twoUp) == null && getBoard().get(up) == null)
         {
             destinations.add(twoUp);
         }

@@ -9,75 +9,84 @@ public class Score
      *      efficient piece evaluation point system as well as the mobility of each piece.
      * @return int the score, the higher the better for the player
      */
+
+    public static int mainScore(Board board, Color color)
+    {
+        Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
+        int score = score(board, color) - score(board, opposite);
+        return score;
+    }
+
     public static int score(Board board, Color color)
     {
         int score = 0;
-        int pawnValue = 100, knightValue = 320, bishopValue = 330, rookValue = 500;
-        int queenValue = 900, kingValue = 20000;
+        int pawnValue = 250, knightValue = 600, bishopValue = 630, rookValue = 900;
+        int queenValue = 1300, kingValue = 20000;
         int centerBonus = 20, centerSquare = board.getNumRows() / 2;
+        int mediumUndevelopped = 75, pawnUndevelopped = 50;
         int[] centerRows = { centerSquare - 1, centerSquare, centerSquare + 1 };
-        Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
-        int botPawnStructureScore = evaluatePawnStructure(board, color);
-        int oppPawnStructureScore = evaluatePawnStructure(board, opposite);
-        for (int row = 0; row < board.getNumRows(); row++)
+        int curPawnStructure = evaluatePawnStructure(board, color);
+        for (Location loc : board.getOccupiedLocations())
         {
-            for (int col = 0; col < board.getNumCols(); col++)
+            Piece piece = board.get(loc);
+            if (piece != null)
             {
-                Location loc = new Location(row, col);
-                Piece piece = board.get(loc);
-                if (piece != null)
+                int value = 0;
+                if (piece instanceof Pawn)
                 {
-                    int value = 0;
-                    if (piece instanceof Pawn)
+                    value = pawnValue;
+                    int startRow = color.equals(Color.WHITE) ? 6 : 1;
+                    if (piece.getLocation().getRow() == startRow)
                     {
-                        value = pawnValue;
+                        value -= pawnUndevelopped;
                     }
-                    else if (piece instanceof Knight)
+                }
+                else if (piece instanceof Knight)
+                {
+                    value = knightValue;
+                    int startRow = color.equals(Color.WHITE) ? 7 : 0;
+                    if (piece.getLocation().getRow() == startRow)
                     {
-                        value = knightValue;
+                        value -= mediumUndevelopped;
                     }
-                    else if (piece instanceof Bishop)
+                }
+                else if (piece instanceof Bishop)
+                {
+                    value = bishopValue;
+                    int startRow = color.equals(Color.WHITE) ? 7 : 0;
+                    if (piece.getLocation().getRow() == startRow)
                     {
-                        value = bishopValue;
+                        value -= mediumUndevelopped;
                     }
-                    else if (piece instanceof Rook)
-                    {
-                        value = rookValue;
-                    }
-                    else if (piece instanceof Queen)
-                    {
-                        value = queenValue;
-                    }
-                    else if (piece instanceof King)
-                    {
-                        value = kingValue;
-                    }
-                    int mobility = piece.destinations().size();
-                    if (piece instanceof Knight || piece instanceof Bishop)
-                    {
-                        value += mobility * 10;
-                    }
-                    else if (piece instanceof Rook || piece instanceof Queen)
-                    {
-                        value += mobility * 5;
-                    }
-                    if (Arrays.binarySearch(centerRows, row) >= 0 
-                        && Arrays.binarySearch(centerRows, col) >= 0)
-                    {
-                        value += centerBonus;
-                    }
-                    if (piece.getColor().equals(color))
-                    {
-                        score += value;
-                    }
-                    else
-                    {
-                        score -= value;
-                    }
+                }
+                else if (piece instanceof Rook)
+                {
+                    value = rookValue;
+                }
+                else if (piece instanceof Queen)
+                {
+                    value = queenValue;
+                }
+                else if (piece instanceof King)
+                {
+                    value = kingValue;
+                }
+                if (piece instanceof Knight || piece instanceof Bishop)
+                {
+                    value += piece.destinations().size() * 5;
+                }
+                if (Arrays.binarySearch(centerRows, loc.getRow()) >= 0 
+                    && Arrays.binarySearch(centerRows, loc.getCol()) >= 0)
+                {
+                    value += centerBonus;
+                }
+                if (piece.getColor().equals(color))
+                {
+                    score += value;
                 }
             }
         }
-        score += ((botPawnStructureScore - oppPawnStructureScore) / 3);
+        score += curPawnStructure;
         return score;
     }
 
@@ -101,19 +110,19 @@ public class Score
                 {
                     if (isPassedPawn((Pawn) piece, board))
                     {
-                        pawnStructureScore += 50;
+                        pawnStructureScore += 200;
                     }
                     else if (isIsolatedPawn((Pawn) piece, board))
                     {
-                        pawnStructureScore -= 10;
+                        pawnStructureScore -= 30;
                     }
                     else if (isDoubledPawn((Pawn) piece, board))
                     {
-                        pawnStructureScore -= 10;
+                        pawnStructureScore -= 30;
                     }
                     else if (isPawnChain((Pawn) piece, board))
                     {
-                        pawnStructureScore += 30;
+                        pawnStructureScore += 100;
                     }
                 }
             }

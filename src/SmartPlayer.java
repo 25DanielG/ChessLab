@@ -1,7 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Vector;
 
 /**
  * A smart player utilizing minimax to play chess very well. The player has dynamic depth and uses
@@ -29,9 +29,9 @@ public class SmartPlayer extends Player
     public Move nextMove() 
     {
         Object[] best = (findBestMove(10, 5000));
-        System.out.println("----------------------");
-        System.out.println("Score: " + best[0]);
-        System.out.println("----------------------");
+        System.out.println("---------------------------------");
+        System.out.println("Score: " + best[0] + ", Line: " + best[2] + ", Depth: " + best[3]);
+        System.out.println("---------------------------------");
         return (Move) best[1];
     }
 
@@ -47,6 +47,7 @@ public class SmartPlayer extends Player
     public Object[] findBestMove(int maxDepth, long timeout)
     {
         Move bestMove = null;
+        Move meanest = null;
         int bestScore = Integer.MIN_VALUE;
         Object[] result = null;
         int maxDepthReached = 0;
@@ -66,26 +67,25 @@ public class SmartPlayer extends Player
             }
         });
         timerThread.start();
-        for (int depth = 1; depth <= maxDepth; depth++)
+        for (int depth = 3; depth <= maxDepth; depth++)
         {
-            if (result != null)
-            {
-                alpha = bestScore - 1000;
-                beta = bestScore + 1000;
-            }
+            long time = System.currentTimeMillis();
             result = valueOfBestMove(depth, alpha, beta);
+            if (!Thread.currentThread().isInterrupted())
+            {
+                System.out.println("Ran depth " + depth + " in " + (System.currentTimeMillis() - time) + "ms");
+            }
             if (result != null)
             {
-                int score = (int) result[0];
-                Move move = (Move) result[1];
                 maxDepthReached = depth;
-                bestMove = move;
-                bestScore = score;
+                bestMove = (Move) result[1];
+                bestScore = (int) result[0];
+                meanest = (Move) result[2];
             }
         }
         timerThread.interrupt();
         System.out.println("Parsed tree with depth: " + maxDepthReached);
-        return new Object[]{bestScore, bestMove};
+        return new Object[]{bestScore, bestMove, meanest, maxDepthReached};
     }    
     
     /**
@@ -96,25 +96,18 @@ public class SmartPlayer extends Player
      * @param alpha the alpha value for alpha-beta pruning
      * @param beta the beta value for alpha-beta pruning
      * @postcondition Object[] has length two, 0 index score, 1 index type Move (best move)
-     * @return Object[] the 0 index containing the min score and the 1 indexx containing the best
+     * @return Object[] the 0 index containing the min score and the 1 index containing the best
      *      move
      */
     private Object[] valueOfMeanestResponse(int depth, int alpha, int beta)
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.score(getBoard(), getColor()), null};
+            return new Object[] {Score.mainScore(getBoard(), getColor()), null};
         }
-        Color color = getColor();
-        if (color.equals(Color.BLACK))
-        {
-            color = Color.WHITE;
-        }
-        else
-        {
-            color = Color.BLACK;
-        }
-        ArrayList<Move> moves = getBoard().allMoves(color);
+        Color color = getColor().equals(Color.BLACK) ? Color.WHITE : Color.BLACK;
+        Vector<Move> moves = getBoard().allMoves(color);
+        moves.sort((m1, m2) -> {return -Integer.compare(m1.getScore(), m2.getScore());});
         int min = Integer.MAX_VALUE;
         Move best = null;
         for (Move move : moves)
@@ -132,13 +125,13 @@ public class SmartPlayer extends Player
                 best = move;
             }
             getBoard().undoMove(move);
-            if (min <= alpha)
-            {
-                break;
-            }
             if (min < beta)
             {
                 beta = min;
+            }
+            if (beta <= alpha)
+            {
+                break;
             }
         }
         return new Object[] {min, best};
@@ -158,26 +151,18 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.score(getBoard(), getColor()), null};
+            return new Object[] {Score.mainScore(getBoard(), getColor()), null};
         }
         if (Thread.currentThread().isInterrupted())
         {
             return null;
         }
-    
-        ArrayList<Move> moves = getBoard().strategicMoves(getColor());
-        moves.sort((m1, m2) ->
-        {
-            Piece p1 = getBoard().get(m1.getDestination());
-            Piece p2 = getBoard().get(m2.getDestination());
-            int val1 = (p1 == null) ? 0 : p1.getValue();
-            int val2 = (p2 == null) ? 0 : p2.getValue();
-            return Integer.compare(val2, val1);
-        });
-    
+        Vector<Move> moves = getBoard().allMoves(getColor());
+        moves.sort((m1, m2) -> Integer.compare(m1.getScore(), m2.getScore()));
         int max = Integer.MIN_VALUE;
         Move best = null;
-        for (Move move : moves)
+        Move meanest = null;
+        for (Move move : moves.parallelStream().toArray(Move[]::new))
         {
             getBoard().executeMove(move);
             Object[] p = valueOfMeanestResponse(depth - 1, alpha, beta);
@@ -191,23 +176,22 @@ public class SmartPlayer extends Player
             {
                 max = score;
                 best = move;
+                meanest = (Move) p[1];
             }
             getBoard().undoMove(move);
-    
-            if (max >= beta)
-            {
-                break;
-            }
             if (max > alpha)
             {
                 alpha = max;
             }
+            if (beta <= alpha)
+            {
+                break;
+            }
         }
-    
         // Quiescence search
         if (depth == 1)
         {
-            int stand_pat = Score.score(getBoard(), getColor());
+            int stand_pat = Score.mainScore(getBoard(), getColor());
             if (stand_pat >= beta)
             {
                 return new Object[] {stand_pat, null};
@@ -216,13 +200,9 @@ public class SmartPlayer extends Player
             {
                 alpha = stand_pat;
             }
-            ArrayList<Move> allMoves = getBoard().allMoves(getColor());
-            for (Move move : allMoves)
+            Vector<Move> allMoves = getBoard().strategicMoves(getColor());
+            for (Move move : allMoves.parallelStream().toArray(Move[]::new))
             {
-                if (move.getVictim() == null)
-                {
-                    continue;
-                }
                 getBoard().executeMove(move);
                 int score = -quiescenceSearch(4, -beta, -alpha);
                 getBoard().undoMove(move);
@@ -237,11 +217,12 @@ public class SmartPlayer extends Player
                 }
             }
         }
-        return new Object[] {max, best};
-    }
+        return new Object[] {max, best, meanest};
+    }    
     
-    private int quiescenceSearch(int depth, int alpha, int beta) {
-        int stand_pat = Score.score(getBoard(), getColor());
+    private int quiescenceSearch(int depth, int alpha, int beta)
+    {
+        int stand_pat = Score.mainScore(getBoard(), getColor());
         if (depth == 0)
         {
             return stand_pat;
@@ -254,13 +235,9 @@ public class SmartPlayer extends Player
         {
             alpha = stand_pat;
         }
-        ArrayList<Move> captureMoves = getBoard().strategicMoves(getColor());
-        for (Move move : captureMoves)
+        Vector<Move> strategicMoves = getBoard().strategicMoves(getColor());
+        for (Move move : strategicMoves)
         {
-            if (move.getVictim() == null)
-            {
-                continue;
-            }
             getBoard().executeMove(move);
             int score = -quiescenceSearch(depth - 1, -beta, -alpha);
             getBoard().undoMove(move);

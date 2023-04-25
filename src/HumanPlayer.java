@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * A HumanPlayer that plays chess by accepting inputed moves from the user.
@@ -32,7 +33,7 @@ public class HumanPlayer extends Player
      */
     public Move nextMove()
     {
-        ArrayList<Move> moves = getBoard().allMoves(getColor());
+        Vector<Move> moves = getBoard().allMoves(getColor());
         Move move = null;
         while (!moves.contains(move))
         {

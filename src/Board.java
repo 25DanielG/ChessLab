@@ -15,6 +15,23 @@ public class Board extends BoundedGrid<Piece>
 		super(8, 8);
 	}
 
+	public Board(Board b)
+	{
+		super(b.getNumRows(), b.getNumCols());
+		for (int r = 0; r < b.getNumRows(); r++)
+		{
+			for (int c = 0; c < b.getNumCols(); c++)
+			{
+				Piece p = b.get(new Location(r, c));
+				if (p != null)
+				{
+					Piece newPiece = p.clone();
+					newPiece.putSelfInGrid(this, new Location(r, c));
+				}
+			}
+		}
+	}
+
 	/**
 	 * @precondition:  move has already been made on the board
 	 * @postcondition: piece has moved back to its source,
@@ -59,23 +76,24 @@ public class Board extends BoundedGrid<Piece>
 	 * @param color the color of the pieces to look for all possible moves
 	 * @return type ArrayList<Move> the list of all possible moves
 	 */
-	public ArrayList<Move> allMoves(Color color)
-    {
-        ArrayList<Location> occupied = getOccupiedLocations();
-        ArrayList<Move> moves = new ArrayList<Move>();
-        for (Location l : occupied)
-        {
-            Piece cur = get(l);
-            if (cur.getColor().equals(color))
-            {
-                for (Location to : cur.destinations())
+	public Vector<Move> allMoves(Color color)
+	{
+		ArrayList<Location> occupied = getOccupiedLocations();
+		Vector<Move> moves = new Vector<Move>();
+		occupied.parallelStream().forEach(location ->
+		{
+			Piece cur = get(location);
+			if (cur.getColor().equals(color))
+			{
+				for (Location to : cur.destinations())
 				{
-                    moves.add(new Move(cur, to));
+					Move move = new Move(cur, to, calculateMoveScore(new Move(cur, to)));
+					moves.add(move);
 				}
-            }
-        }
-        return moves;
-    }
+			}
+		});
+		return moves;
+	}	
 
 	/**
 	 * Returns all strategic possible moves in a chess board by looping through all pieces and
@@ -83,28 +101,30 @@ public class Board extends BoundedGrid<Piece>
 	 * @param color the color of the pieces to look for all possible moves
 	 * @return type ArrayList<Move> the list of all strategic moves
 	 */
-	public ArrayList<Move> strategicMoves(Color color)
+	public Vector<Move> strategicMoves(Color color)
 	{
-		ArrayList<Location> occupied = getOccupiedLocations();
-		ArrayList<Move> moves = new ArrayList<>();
-		for (Location l : occupied)
+		Vector<Move> moves = this.allMoves(color);
+		Vector<Move> strategicMoves = new Vector<Move>();
+		int previousScore = Score.score(this, color);
+		moves.parallelStream().forEach(m ->
 		{
-			Piece cur = get(l);
-			if (cur.getColor().equals(color))
+			Board boardCopy = new Board(this);
+			Move newMove = new Move(boardCopy.get(m.getSource()), m.getDestination());
+			boardCopy.executeMove(newMove);
+			int score = Score.score(boardCopy, color);
+			if (score - previousScore > 10)
 			{
-				for (Location to : cur.destinations())
+				m.setScore(score - previousScore);
+				synchronized (strategicMoves)
 				{
-					int score = calculateMoveScore(new Move(cur, to));
-					if (score > 0)
-					{
-						moves.add(new Move(cur, to, score));
-					}
+					strategicMoves.add(m);
 				}
 			}
-		}
-		moves.sort((m1, m2) -> Integer.compare(m2.getScore(), m1.getScore()));
-		return moves;
+		});
+		strategicMoves.sort((m1, m2) -> Integer.compare(m2.getScore(), m1.getScore()));
+		return strategicMoves;
 	}
+	
 
 	/**
 	 * Calculates the score of a move based on value of piece being moved, captured piece (if any)

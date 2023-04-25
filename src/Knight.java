@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A class that describes the Knight piece of a chess set. It overrides a method
@@ -23,6 +24,11 @@ public class Knight extends Piece
     public Knight(Color col, String fileName)
     {
         super(col, fileName, 3);
+    }
+
+    public String toString()
+    {
+        return "N";
     }
 
     /**

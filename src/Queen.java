@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * A class that describes the Queen piece of a chess set. It overrides a method
@@ -18,6 +19,11 @@ public class Queen extends Piece
     public Queen(Color col, String filename)
     {
         super(col, filename, 9);
+    }
+
+    public String toString()
+    {
+        return "Q";
     }
 
     /**

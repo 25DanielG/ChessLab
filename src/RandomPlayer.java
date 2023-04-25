@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Vector;
 
 /**
  * A RandomPlayer that plays chess by playing random moves.
@@ -28,7 +29,7 @@ public class RandomPlayer extends Player
      */
     public Move nextMove()
     {
-        ArrayList<Move> moves = getBoard().allMoves(getColor());
+        Vector<Move> moves = getBoard().allMoves(getColor());
         return moves.get((int) (Math.random() * moves.size()));
     }
 }
