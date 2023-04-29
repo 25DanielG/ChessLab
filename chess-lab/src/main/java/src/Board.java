@@ -242,47 +242,75 @@ public class Board extends BoundedGrid<Piece>
 
 	public String toFEN(Color activeColor)
 	{
-		StringBuilder sb = new StringBuilder();
-		for (int rank = 8; rank >= 1; rank--)
+		String FEN = "";
+		for (int i = 1; i <= 8; i++)
 		{
-			int emptySquares = 0;
-			for (int file = 1; file <= 8; file++)
+			int empty = 0;
+			for (int j = 1; j <= 8; j++)
 			{
-				Piece piece = this.get(new Location(file - 1, rank - 1));
-				if (piece == null)
+				if (this.get(new Location(i - 1, j - 1)) != null)
 				{
-					emptySquares++;
+					if (empty != 0)
+					{
+						FEN += empty;
+						empty = 0;
+					}
+					Piece current = this.get(new Location(i - 1, j - 1));
+					char name = 'z';
+					if (current instanceof Pawn)
+					{
+						name = 'p';
+					}
+					else if (current instanceof Bishop)
+					{
+						name = 'b';
+					}
+					else if (current instanceof Knight)
+					{
+						name = 'n';
+					}
+					else if (current instanceof Rook)
+					{
+						name = 'r';
+					}
+					else if (current instanceof Queen)
+					{
+						name = 'q';
+					}
+					else if (current instanceof King)
+					{
+						name = 'k';
+					}
+					if (current.getColor().equals(Color.WHITE))
+					{
+						name = Character.toUpperCase(name);
+						FEN += name;
+					}
+					else if (name != 'z')
+					{
+						FEN += name;
+					}
 				}
 				else
 				{
-					if (emptySquares > 0)
-					{
-						sb.append(emptySquares);
-						emptySquares = 0;
-					}
-					sb.append(piece.toFEN());
+					empty++;
 				}
 			}
-			if (emptySquares > 0)
+			if(empty != 0)
 			{
-				sb.append(emptySquares);
+				FEN += empty;
 			}
-			if (rank > 1)
+			if(i != 8)
 			{
-				sb.append("/");
+				FEN += "/";
 			}
 		}
-		sb.append(" ");
-		sb.append(activeColor.equals(Color.WHITE) ? "w" : "b");
-		sb.append(" ");
-		sb.append(this.getCastlingRights());
-		sb.append(" ");
-		sb.append(this.getEnPassantTarget() == null ? "-" : this.getEnPassantTarget());
-		sb.append(" ");
-		sb.append(this.getHalfmoveClock());
-		sb.append(" ");
-		sb.append(this.getFullmoveNumber());
-		return sb.toString();
+		FEN += " " + (activeColor.equals(Color.WHITE) ? "w" : "b");
+		FEN += " " + this.getCastlingRights();
+		FEN += " " + (this.getEnPassantTarget() == null ? "-" : this.getEnPassantTarget());
+		FEN += " " + this.getHalfmoveClock();
+		FEN += " " + this.getFullmoveNumber();
+		return FEN;
 	}
 
 	private Piece getEnPassantTarget()
@@ -307,26 +335,26 @@ public class Board extends BoundedGrid<Piece>
 		String rights = "";
 		if (!whiteKing.getMoved())
 		{
-			if (!wRookKing.getMoved())
+			if (!wRookKing.getMoved() && whiteKing.isValidCastle(wRookKing.getLocation(), wRookKing.getLocation()))
 			{
 				rights += "K";
 			}
-			if (!wRookQueen.getMoved())
+			if (!wRookQueen.getMoved() && whiteKing.isValidCastle(wRookQueen.getLocation(), wRookQueen.getLocation()))
 			{
 				rights += "Q";
 			}
 		}
 		if (!blackKing.getMoved())
 		{
-			if (!bRookKing.getMoved())
+			if (!bRookKing.getMoved() && blackKing.isValidCastle(bRookKing.getLocation(), bRookKing.getLocation()))
 			{
 				rights += "k";
 			}
-			if (!bRookQueen.getMoved())
+			if (!bRookQueen.getMoved() && blackKing.isValidCastle(bRookQueen.getLocation(), bRookQueen.getLocation()))
 			{
 				rights += "q";
 			}
 		}
-		return rights;
+		return rights.equals("") ? "-" : rights;
 	}
 }

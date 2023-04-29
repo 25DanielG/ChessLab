@@ -33,7 +33,7 @@ public class MLP
         System.out.println("Loaded data");
         int numInputs = (int) dataSets.get(0).getFeatures().size(1);
         int numOutputs = (int) dataSets.get(0).getLabels().size(1);
-        int numHiddenNodes = 300;
+        int numHiddenNodes = 100;
         int batchSize = 64;
         // Split data
         DataSetIterator iterator = new ListDataSetIterator<DataSet>(dataSets, batchSize);
