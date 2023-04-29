@@ -303,4 +303,37 @@ public abstract class Piece implements Cloneable
             }
         }
     }
+
+    public String toFEN()
+    {
+        if (this instanceof Pawn)
+        {
+            return this.getColor().equals(Color.WHITE) ? "P" : "p";
+        }
+        else if (this instanceof Knight)
+        {
+            return this.getColor().equals(Color.WHITE) ? "N" : "n";
+        }
+        else if (this instanceof Bishop)
+        {
+            return this.getColor().equals(Color.WHITE) ? "B" : "b";
+        }
+        else if (this instanceof Rook)
+        {
+            return this.getColor().equals(Color.WHITE) ? "R" : "r";
+        }
+        else if (this instanceof Queen)
+        {
+            return this.getColor().equals(Color.WHITE) ? "Q" : "q";
+        }
+        else if (this instanceof King)
+        {
+            return this.getColor().equals(Color.WHITE) ? "K" : "k";
+        }
+        else
+        {
+            throw new IllegalStateException("Invalid piece type");
+        }
+    }
+
 }

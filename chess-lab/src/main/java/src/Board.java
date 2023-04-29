@@ -87,7 +87,11 @@ public class Board extends BoundedGrid<Piece>
             {
                 for (Location to : cur.destinations())
 				{
-                    moves.add(new Move(cur, to));
+					Move m = new Move(cur, to);
+					this.executeMove(m);
+					int score = Score.quickScore(this, color);
+					this.undoMove(m);
+                    moves.add(new Move(cur, to, score));
 				}
             }
         }
@@ -110,7 +114,11 @@ public class Board extends BoundedGrid<Piece>
             {
                 for (Location to : cur.illegalDestinations())
 				{
-                    moves.add(new Move(cur, to));
+                    Move m = new Move(cur, to);
+					this.executeMove(m);
+					int score = Score.quickScore(this, color);
+					this.undoMove(m);
+                    moves.add(new Move(cur, to, score));
 				}
             }
         }
@@ -131,7 +139,7 @@ public class Board extends BoundedGrid<Piece>
 		moves.parallelStream().forEach(m ->
 		{
 			Board boardCopy = new Board(this);
-			Move newMove = new Move(boardCopy.get(m.getSource()), m.getDestination());
+			Move newMove = new Move(boardCopy.get(m.getSource()), m.getDestination(), Score.quickScore(this, color));
 			boardCopy.executeMove(newMove);
 			int score = Score.score(boardCopy, color);
 			if (score - previousScore > 10)
@@ -230,5 +238,95 @@ public class Board extends BoundedGrid<Piece>
 			}
             move.getPiece().moveTo(move.getDestination());
         }
+	}
+
+	public String toFEN(Color activeColor)
+	{
+		StringBuilder sb = new StringBuilder();
+		for (int rank = 8; rank >= 1; rank--)
+		{
+			int emptySquares = 0;
+			for (int file = 1; file <= 8; file++)
+			{
+				Piece piece = this.get(new Location(file - 1, rank - 1));
+				if (piece == null)
+				{
+					emptySquares++;
+				}
+				else
+				{
+					if (emptySquares > 0)
+					{
+						sb.append(emptySquares);
+						emptySquares = 0;
+					}
+					sb.append(piece.toFEN());
+				}
+			}
+			if (emptySquares > 0)
+			{
+				sb.append(emptySquares);
+			}
+			if (rank > 1)
+			{
+				sb.append("/");
+			}
+		}
+		sb.append(" ");
+		sb.append(activeColor.equals(Color.WHITE) ? "w" : "b");
+		sb.append(" ");
+		sb.append(this.getCastlingRights());
+		sb.append(" ");
+		sb.append(this.getEnPassantTarget() == null ? "-" : this.getEnPassantTarget());
+		sb.append(" ");
+		sb.append(this.getHalfmoveClock());
+		sb.append(" ");
+		sb.append(this.getFullmoveNumber());
+		return sb.toString();
+	}
+
+	private Piece getEnPassantTarget()
+	{
+		return null;
+	}
+
+	private int getHalfmoveClock()
+	{
+		return 0;
+	}
+
+	private int getFullmoveNumber()
+	{
+		return 1;
+	}
+
+	private String getCastlingRights()
+	{
+		King whiteKing = Game.wKing, blackKing = Game.bKing;
+		Rook wRookKing = Game.wRookKing, wRookQueen = Game.wRookQueen, bRookKing = Game.bRookKing, bRookQueen = Game.bRookQueen;
+		String rights = "";
+		if (!whiteKing.getMoved())
+		{
+			if (!wRookKing.getMoved())
+			{
+				rights += "K";
+			}
+			if (!wRookQueen.getMoved())
+			{
+				rights += "Q";
+			}
+		}
+		if (!blackKing.getMoved())
+		{
+			if (!bRookKing.getMoved())
+			{
+				rights += "k";
+			}
+			if (!bRookQueen.getMoved())
+			{
+				rights += "q";
+			}
+		}
+		return rights;
 	}
 }

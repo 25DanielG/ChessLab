@@ -40,7 +40,9 @@ public class King extends Piece
     @Override
     public ArrayList<Location> destinations()
     {
-        return illegalDestinations();
+        ArrayList<Location> destinations = illegalDestinations();
+        removeIllegalMoves(destinations);
+        return destinations;
     }
 
     public ArrayList<Location> illegalDestinations()

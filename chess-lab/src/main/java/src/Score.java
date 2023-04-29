@@ -1,6 +1,7 @@
 package src;
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.Vector;
 
 public class Score
 {
@@ -9,18 +10,17 @@ public class Score
      *      efficient piece evaluation point system as well as the mobility of each piece.
      * @return int the score, the higher the better for the player
      */
-
     public static int mainScore(Board board, Color color)
     {
         Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
-        int score = score(board, color) - score(board, opposite);
+        int score = (score(board, color) - score(board, opposite));
         return score;
     }
 
     public static int quickScore(Board board, Color color)
     {
         Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
-        int score = fastEval(board, color) - fastEval(board, opposite);
+        int score = (fastEval(board, color) - fastEval(board, opposite));
         return score;
     }
 
@@ -42,7 +42,15 @@ public class Score
                     int startRow = color.equals(Color.WHITE) ? 6 : 1;
                     if (piece.getLocation().getRow() == startRow)
                     {
-                        value -= pawnUndevelopped;
+                        int[] outerCol = new int[] {0, 1, 6, 7};
+                        if (Arrays.binarySearch(outerCol, piece.getLocation().getCol()) < 0)
+                        {
+                            value -= pawnUndevelopped;
+                        }
+                        else
+                        {
+                            value -= pawnUndevelopped / 2;
+                        }
                     }
                 }
                 else if (piece instanceof Knight)
@@ -84,9 +92,9 @@ public class Score
     public static int score(Board board, Color color)
     {
         int score = 0;
-        int pawnValue = 250, knightValue = 800, bishopValue = 830, rookValue = 1400;
-        int queenValue = 2300, kingValue = 20000;
-        int centerBonus = 75, centerSquare = board.getNumRows() / 2;
+        int pawnValue = 300, knightValue = 800, bishopValue = 830, rookValue = 1400;
+        int queenValue = 8000, kingValue = 20000;
+        int centerBonus = 150, centerSquare = board.getNumRows() / 2;
         int mediumUndevelopped = 100, pawnUndevelopped = 75;
         int[] centerRows = { centerSquare - 1, centerSquare, centerSquare + 1 };
         int curPawnStructure = evaluatePawnStructure(board, color);
@@ -102,7 +110,15 @@ public class Score
                     int startRow = color.equals(Color.WHITE) ? 6 : 1;
                     if (piece.getLocation().getRow() == startRow)
                     {
-                        value -= pawnUndevelopped;
+                        int[] outerCol = new int[] {0, 1, 6, 7};
+                        if (Arrays.binarySearch(outerCol, piece.getLocation().getCol()) < 0)
+                        {
+                            value -= pawnUndevelopped;
+                        }
+                        else
+                        {
+                            value -= pawnUndevelopped / 2;
+                        }
                     }
                 }
                 else if (piece instanceof Knight)
@@ -139,8 +155,7 @@ public class Score
                 {
                     value += piece.destinations().size() * 5;
                 }
-                if (Arrays.binarySearch(centerRows, loc.getRow()) >= 0 
-                    && Arrays.binarySearch(centerRows, loc.getCol()) >= 0)
+                if (Arrays.binarySearch(centerRows, loc.getRow()) >= 0 && Arrays.binarySearch(centerRows, loc.getCol()) >= 0)
                 {
                     value += centerBonus;
                 }
@@ -148,6 +163,40 @@ public class Score
             }
         }
         score += curPawnStructure / 2;
+        score = subtractUnderAttack(board, color, score, pawnValue, knightValue, bishopValue, rookValue, queenValue);
+        return score;
+    }
+
+    public static int subtractUnderAttack(Board board, Color color, int score, int pawnValue, int knightValue, int bishopValue, int rookValue, int queenValue)
+    {
+        Color opposite = color.equals(Color.WHITE) ? Color.BLACK : Color.WHITE;
+        Vector<Move> oppMoves = board.allMoves(opposite);
+        for (Move m : oppMoves)
+        {
+            if (m.getVictim() != null)
+            {
+                if (m.getVictim() instanceof Pawn)
+                {
+                    score -= pawnValue / 4;
+                }
+                else if (m.getVictim() instanceof Knight)
+                {
+                    score -= knightValue / 3;
+                }
+                else if (m.getVictim() instanceof Bishop)
+                {
+                    score -= bishopValue / 3;
+                }
+                else if (m.getVictim() instanceof Rook)
+                {
+                    score -= rookValue / 3;
+                }
+                else if (m.getVictim() instanceof Queen)
+                {
+                    score -= queenValue / 3;
+                }
+            }
+        }
         return score;
     }
 

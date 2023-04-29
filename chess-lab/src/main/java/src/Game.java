@@ -1,10 +1,13 @@
 package src;
 import java.awt.*;
+import java.io.IOException;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 public class Game
 {
-    static King wKing;
-    static King bKing;
+    static King wKing, bKing;
+    static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
+    static final boolean train = true;
     /**
      * The main method of the chess game that sets up the chess board and the two players.
      * @param args optional arguments that can be passed via the terminal
@@ -12,15 +15,20 @@ public class Game
     public static void main(String[] args)
     {
         Board board = new Board();
-
+        if (train)
+        {
+            MLP.main(args);
+        }
         Piece blackKing = new King(Color.BLACK, "./img/black_king.gif");
         blackKing.putSelfInGrid(board, new Location(0, 4));
         Piece blackQueen = new Queen(Color.BLACK, "./img/black_queen.gif");
         blackQueen.putSelfInGrid(board, new Location(0, 3));
         Piece blackRookOne = new Rook(Color.BLACK, "./img/black_rook.gif");
         blackRookOne.putSelfInGrid(board, new Location(0, 0));
+        bRookQueen = (Rook) blackRookOne;
         Piece blackRookTwo = new Rook(Color.BLACK, "./img/black_rook.gif");
         blackRookTwo.putSelfInGrid(board, new Location(0, 7));
+        bRookKing = (Rook) blackRookTwo;
         Piece blackKnightOne = new Knight(Color.BLACK, "./img/black_knight.gif");
         blackKnightOne.putSelfInGrid(board, new Location(0, 1));
         Piece blackKnightTwo = new Knight(Color.BLACK, "./img/black_knight.gif");
@@ -41,8 +49,10 @@ public class Game
         whiteQueen.putSelfInGrid(board, new Location(7, 3));
         Piece whiteRookOne = new Rook(Color.WHITE, "./img/white_rook.gif");
         whiteRookOne.putSelfInGrid(board, new Location(7, 0));
+        wRookQueen = (Rook) whiteRookOne;
         Piece whiteRookTwo = new Rook(Color.WHITE, "./img/white_rook.gif");
         whiteRookTwo.putSelfInGrid(board, new Location(7, 7));
+        wRookKing = (Rook) whiteRookTwo;
         Piece whiteKnightOne = new Knight(Color.WHITE, "./img/white_knight.gif");
         whiteKnightOne.putSelfInGrid(board, new Location(7, 1));
         Piece whiteKnightTwo = new Knight(Color.WHITE, "./img/white_knight.gif");
@@ -60,7 +70,17 @@ public class Game
         BoardDisplay display = new BoardDisplay(board);
         wKing = (King) whiteKing;
         bKing = (King) blackKing;
-        play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
+        MultiLayerNetwork network;
+        try
+        {
+            network = MLP.loadNetwork();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            return;
+        }
+        play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer", network));
         // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new HumanPlayer(board, display, Color.BLACK, "Human"));
         // play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human 1"), new HumanPlayer(board, display, Color.BLACK, "Human 2"));
         // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
