@@ -13,5 +13,12 @@
  - Piece mobility
  - Piece development
 
-##### To run: javac *.java && java Game
-Runs Depth 4-5 in a stable time limit
+##### Dependencies
+Maven
+JDK 17
+##### Running
+mvn compile
+mvn clean install
+mvn exec:java
+##### Extra information
+Runs Depth _ in a stable time limit
