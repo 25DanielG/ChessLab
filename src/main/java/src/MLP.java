@@ -12,6 +12,7 @@ import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
+import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Sgd;
@@ -19,6 +20,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import com.opencsv.CSVReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -30,40 +32,58 @@ public class MLP
     {
         // Load data
         List<DataSet> dataSets = loadData();
+        DataSet mainSet = DataSet.merge(dataSets);
         System.out.println("Loaded data");
         int numInputs = (int) dataSets.get(0).getFeatures().size(1);
         int numOutputs = (int) dataSets.get(0).getLabels().size(1);
-        int numHiddenNodes = 100;
+        int numHiddenNodes = 150;
+        int laterHiddenNodes = 75;
         int batchSize = 64;
-        DataSetIterator fullIterator = new ListDataSetIterator<DataSet>(dataSets, batchSize);
-        DataSetIterator[] trainAndValid = fullIterator.splitTestAndTrain(0.8);
+        double dropoutProb = 0.1;
+        SplitTestAndTrain trainAndValid = mainSet.splitTestAndTrain(0.8);
+        DataSetIterator trainIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTrain().asList(), batchSize);
+        DataSetIterator validIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTest().asList(), batchSize);
         // MLP architecture
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
             .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
-            .updater(new Sgd(0.01))
+            .updater(new Sgd(0.001))
             .list()
             .layer(new DenseLayer.Builder()
-                    .nIn(numInputs)
-                    .nOut(numHiddenNodes)
-                    .activation(Activation.RELU6)
-                    .build())
+                .nIn(numInputs)
+                .nOut(numHiddenNodes)
+                .activation(Activation.RELU)
+                .build())
             .layer(new DenseLayer.Builder()
-                    .nIn(numHiddenNodes)
-                    .nOut(numHiddenNodes)
-                    .activation(Activation.RELU6)
-                    .build())
+                .nIn(numHiddenNodes)
+                .nOut(numHiddenNodes)
+                .dropOut(dropoutProb)
+                .activation(Activation.RELU)
+                .build())
             .layer(new DenseLayer.Builder()
-                    .nIn(numHiddenNodes)
-                    .nOut(numHiddenNodes)
-                    .activation(Activation.RELU6)
-                    .build())
+                .nIn(numHiddenNodes)
+                .nOut(laterHiddenNodes)
+                .dropOut(dropoutProb)
+                .activation(Activation.RELU6)
+                .build())
+            .layer(new DenseLayer.Builder()
+                .nIn(laterHiddenNodes)
+                .nOut(laterHiddenNodes)
+                .dropOut(dropoutProb)
+                .activation(Activation.RELU)
+                .build())
+            .layer(new DenseLayer.Builder()
+                .nIn(laterHiddenNodes)
+                .nOut(laterHiddenNodes)
+                .dropOut(dropoutProb)
+                .activation(Activation.RELU6)
+                .build())
             .layer(new OutputLayer.Builder()
-                    .nIn(numHiddenNodes)
-                    .nOut(numOutputs)
-                    .activation(Activation.IDENTITY)
-                    .lossFunction(LossFunctions.LossFunction.MSE)
-                    .build())
+                .nIn(laterHiddenNodes)
+                .nOut(numOutputs)
+                .activation(Activation.TANH)
+                .lossFunction(LossFunctions.LossFunction.MSE)
+                .build())
             .build();
         MultiLayerNetwork network = new MultiLayerNetwork(configuration);
         network.init();
@@ -79,10 +99,10 @@ public class MLP
         String progressString = "";
         for (int i = 0; i < numEpochs; i++)
         {
-            trainAndValid[0].reset();
-            network.fit(trainAndValid[0]);
-            // Check score on test set
-            double score = network.score(trainAndValid[1]);
+            trainIterator.reset();
+            network.fit(trainIterator);
+            DataSet nextDataSet = validIterator.next();
+            double score = network.score(nextDataSet);
             if (score < bestScore)
             {
                 bestScore = score;
@@ -99,7 +119,7 @@ public class MLP
             }
             progressString += "==";
             spaceString = spaceString.substring(0, spaceString.length() - 2);
-            System.out.print("|" + progressString + spaceString + "|\r");
+            System.out.print("|" + progressString + spaceString + "|, Epoch " + (i + 1) + " gives score: " + score + "\r");
         }
         System.out.println();
         System.out.println("Training completed.");
@@ -125,7 +145,7 @@ public class MLP
             System.out.println("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
-            while ((nextLine = reader.readNext()) != null)
+            while ((nextLine = reader.readNext()) != null && dataSets.size() < 1000000)
             {
                 double[] input = stringToFen(nextLine[0]);
                 int index = nextLine[1].indexOf("#", 0);
@@ -150,6 +170,7 @@ public class MLP
         {
             e.printStackTrace();
         }
+        System.out.println("Data sets size: " + dataSets.size());
         return dataSets;
     }
     
