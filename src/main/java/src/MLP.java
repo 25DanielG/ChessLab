@@ -42,7 +42,7 @@ public class MLP
         double dropoutProb = 0.1;
         SplitTestAndTrain trainAndValid = mainSet.splitTestAndTrain(0.8);
         DataSetIterator trainIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTrain().asList(), batchSize);
-        DataSetIterator validIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTest().asList(), batchSize);
+        DataSetIterator validIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTest().asList());
         // MLP architecture
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
@@ -100,10 +100,12 @@ public class MLP
         for (int i = 0; i < numEpochs; i++)
         {
             trainIterator.reset();
-            while (trainIterator.hasNext()) {
-                DataSet nextDataSet = trainIterator.next(batchSize);
-                network.fit(nextDataSet);
+            while (trainIterator.hasNext())
+            {
+                DataSet nextBatch = trainIterator.next();
+                network.fit(nextBatch);
             }
+            validIterator.reset();
             DataSet nextValidateDataSet = validIterator.next();
             double score = network.score(nextValidateDataSet);
             if (score < bestScore)
