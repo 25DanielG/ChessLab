@@ -47,7 +47,7 @@ public class MLP
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
             .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
-            .updater(new Sgd(0.001))
+            .updater(new Adam(0.001, 0.9, 0.999))
             .list()
             .layer(new DenseLayer.Builder()
                 .nIn(numInputs)
