@@ -35,45 +35,35 @@ public class MLP
         int numOutputs = (int) dataSets.get(0).getLabels().size(1);
         int numHiddenNodes = 100;
         int batchSize = 64;
-        // Split data
-        DataSetIterator iterator = new ListDataSetIterator<DataSet>(dataSets, batchSize);
+        DataSetIterator fullIterator = new ListDataSetIterator<DataSet>(dataSets, batchSize);
+        DataSetIterator[] trainAndValid = fullIterator.splitTestAndTrain(0.8);
         // MLP architecture
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
             .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
-            .updater(new Sgd(0.1))
+            .updater(new Sgd(0.01))
             .list()
             .layer(new DenseLayer.Builder()
-                .nIn(numInputs)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU6)
-                .build())
+                    .nIn(numInputs)
+                    .nOut(numHiddenNodes)
+                    .activation(Activation.RELU6)
+                    .build())
             .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU6)
-                .build())
+                    .nIn(numHiddenNodes)
+                    .nOut(numHiddenNodes)
+                    .activation(Activation.RELU6)
+                    .build())
             .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU6)
-                .build())
-            .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU6)
-                .build())
-            .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU6)
-                .build())
+                    .nIn(numHiddenNodes)
+                    .nOut(numHiddenNodes)
+                    .activation(Activation.RELU6)
+                    .build())
             .layer(new OutputLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numOutputs)
-                .activation(Activation.IDENTITY)
-                .lossFunction(LossFunctions.LossFunction.MSE)
-                .build())
+                    .nIn(numHiddenNodes)
+                    .nOut(numOutputs)
+                    .activation(Activation.IDENTITY)
+                    .lossFunction(LossFunctions.LossFunction.MSE)
+                    .build())
             .build();
         MultiLayerNetwork network = new MultiLayerNetwork(configuration);
         network.init();
@@ -82,18 +72,37 @@ public class MLP
         System.out.println("Training network...");
         network.setListeners(new ScoreIterationListener(100));
         int numEpochs = 10;
+        double bestScore = Double.MAX_VALUE;
+        int epochsSinceLastImprovement = 0;
         System.out.print("|                    |\r");
         String spaceString = "                    ";
         String progressString = "";
         for (int i = 0; i < numEpochs; i++)
         {
-            iterator.reset();
-            network.fit(iterator);
+            trainAndValid[0].reset();
+            network.fit(trainAndValid[0]);
+            // Check score on test set
+            double score = network.score(trainAndValid[1]);
+            if (score < bestScore)
+            {
+                bestScore = score;
+                epochsSinceLastImprovement = 0;
+            }
+            else
+            {
+                epochsSinceLastImprovement++;
+            }
+            if (epochsSinceLastImprovement == 5)
+            {
+                System.out.println("Training stopped due to lack of improvement in validation");
+                break;
+            }
             progressString += "==";
             spaceString = spaceString.substring(0, spaceString.length() - 2);
             System.out.print("|" + progressString + spaceString + "|\r");
         }
         System.out.println();
+        System.out.println("Training completed.");
         // Save model
         System.out.println("Saving network...");
         File locationToSave = new File("trainedMLP.zip");
