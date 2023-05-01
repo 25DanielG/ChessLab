@@ -100,9 +100,12 @@ public class MLP
         for (int i = 0; i < numEpochs; i++)
         {
             trainIterator.reset();
-            network.fit(trainIterator);
-            DataSet nextDataSet = validIterator.next();
-            double score = network.score(nextDataSet);
+            while (trainIterator.hasNext()) {
+                DataSet nextDataSet = trainIterator.next(batchSize);
+                network.fit(nextDataSet);
+            }
+            DataSet nextValidateDataSet = validIterator.next();
+            double score = network.score(nextValidateDataSet);
             if (score < bestScore)
             {
                 bestScore = score;
