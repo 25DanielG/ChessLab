@@ -36,8 +36,8 @@ public class MLP
         System.out.println("Loaded data");
         int numInputs = (int) dataSets.get(0).getFeatures().size(1);
         int numOutputs = (int) dataSets.get(0).getLabels().size(1);
-        int numHiddenNodes = 150;
-        int laterHiddenNodes = 75;
+        int numHiddenNodes = 2048;
+        int laterHiddenNodes = 1024;
         int batchSize = 64;
         double dropoutProb = 0.1;
         SplitTestAndTrain trainAndValid = mainSet.splitTestAndTrain(0.8);
@@ -91,7 +91,7 @@ public class MLP
         // Train network
         System.out.println("Training network...");
         network.setListeners(new ScoreIterationListener(100));
-        int numEpochs = 10;
+        int numEpochs = 25;
         double bestScore = Double.MAX_VALUE;
         int epochsSinceLastImprovement = 0;
         System.out.print("|                    |\r");
@@ -200,12 +200,7 @@ public class MLP
                 index++;
             }
         }
-        double[] result = new double[index];
-        for (int i = 0; i < index; i++)
-        {
-            result[i] = nums[i];
-        }
-        return result;
+        return nums;
     }
 
     private static int pieceToNum(char piece)
