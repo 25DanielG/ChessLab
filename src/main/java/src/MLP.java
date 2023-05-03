@@ -17,6 +17,15 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import org.deeplearning4j.earlystopping.EarlyStoppingConfiguration;
+import org.deeplearning4j.earlystopping.EarlyStoppingResult;
+import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
+import org.deeplearning4j.earlystopping.scorecalc.DataSetLossCalculator;
+import org.deeplearning4j.earlystopping.termination.MaxEpochsTerminationCondition;
+import org.deeplearning4j.earlystopping.termination.MaxScoreIterationTerminationCondition;
+import org.deeplearning4j.earlystopping.termination.MaxTimeIterationTerminationCondition;
+import org.deeplearning4j.earlystopping.trainer.EarlyStoppingTrainer;
+
 
 import com.opencsv.CSVReader;
 import java.util.ArrayList;
@@ -25,6 +34,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MLP
 {
@@ -46,7 +56,7 @@ public class MLP
         // MLP architecture
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
-            .optimizationAlgo(OptimizationAlgorithm.LINE_GRADIENT_DESCENT)
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .updater(new Sgd(0.001))
             .list()
             .layer(new DenseLayer.Builder()
@@ -90,43 +100,16 @@ public class MLP
         System.out.println("Built network architecture");
         // Train network
         System.out.println("Training network...");
-        network.setListeners(new ScoreIterationListener(100));
+        network.setListeners(new ScoreIterationListener(1000));
         int numEpochs = 25;
-        double bestScore = Double.MAX_VALUE;
-        int epochsSinceLastImprovement = 0;
-        System.out.print("|                    |\r");
-        String spaceString = "                    ";
-        String progressString = "";
-        for (int i = 0; i < numEpochs; i++)
-        {
-            trainIterator.reset();
-            while (trainIterator.hasNext())
-            {
-                DataSet nextBatch = trainIterator.next();
-                network.fit(nextBatch);
-            }
-            validIterator.reset();
-            DataSet nextValidateDataSet = validIterator.next();
-            double score = network.score(nextValidateDataSet);
-            if (score < bestScore)
-            {
-                bestScore = score;
-                epochsSinceLastImprovement = 0;
-            }
-            else
-            {
-                epochsSinceLastImprovement++;
-            }
-            if (epochsSinceLastImprovement == 5)
-            {
-                System.out.println("Training stopped due to lack of improvement in validation");
-                break;
-            }
-            progressString += "==";
-            spaceString = spaceString.substring(0, spaceString.length() - 2);
-            System.out.print("|" + progressString + spaceString + "|, Epoch " + (i + 1) + " gives score: " + score + "\r");
-        }
-        System.out.println();
+        EarlyStoppingConfiguration stopConfig = new EarlyStoppingConfiguration.Builder()
+            .epochTerminationConditions(new MaxEpochsTerminationCondition(numEpochs))
+            .scoreCalculator(new DataSetLossCalculator(validIterator, true))
+            .evaluateEveryNEpochs(1)
+            .build();
+        EarlyStoppingTrainer earlyStopper = new EarlyStoppingTrainer(stopConfig, network, trainIterator);
+        EarlyStoppingResult<MultiLayerNetwork> result = earlyStopper.fit();
+        network = result.getBestModel();
         System.out.println("Training completed.");
         // Save model
         System.out.println("Saving network...");
