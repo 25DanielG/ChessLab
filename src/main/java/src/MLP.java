@@ -100,7 +100,7 @@ public class MLP
         System.out.println("Built network architecture");
         // Train network
         System.out.println("Training network...");
-        network.setListeners(new ScoreIterationListener(1000));
+        network.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
         EarlyStoppingConfiguration stopConfig = new EarlyStoppingConfiguration.Builder()
             .epochTerminationConditions(new MaxEpochsTerminationCondition(numEpochs))
