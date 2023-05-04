@@ -15,26 +15,20 @@ import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.deeplearning4j.earlystopping.EarlyStoppingConfiguration;
 import org.deeplearning4j.earlystopping.EarlyStoppingResult;
-import org.deeplearning4j.earlystopping.saver.LocalFileModelSaver;
 import org.deeplearning4j.earlystopping.scorecalc.DataSetLossCalculator;
 import org.deeplearning4j.earlystopping.termination.MaxEpochsTerminationCondition;
-import org.deeplearning4j.earlystopping.termination.MaxScoreIterationTerminationCondition;
-import org.deeplearning4j.earlystopping.termination.MaxTimeIterationTerminationCondition;
 import org.deeplearning4j.earlystopping.trainer.EarlyStoppingTrainer;
-
+import org.nd4j.linalg.learning.config.Adam;
 
 import com.opencsv.CSVReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MLP
 {
@@ -57,12 +51,13 @@ public class MLP
         MultiLayerConfiguration configuration = new NeuralNetConfiguration.Builder()
             .seed(123)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-            .updater(new Sgd(0.001))
+            //.updater(new Sgd(0.001))
+            .updater(new Adam(0.001))
             .list()
             .layer(new DenseLayer.Builder()
                 .nIn(numInputs)
                 .nOut(numHiddenNodes)
-                .activation(Activation.RELU)
+                .activation(Activation.IDENTITY)
                 .build())
             .layer(new DenseLayer.Builder()
                 .nIn(numHiddenNodes)
@@ -74,7 +69,7 @@ public class MLP
                 .nIn(numHiddenNodes)
                 .nOut(laterHiddenNodes)
                 .dropOut(dropoutProb)
-                .activation(Activation.RELU6)
+                .activation(Activation.RELU)
                 .build())
             .layer(new DenseLayer.Builder()
                 .nIn(laterHiddenNodes)
@@ -86,12 +81,12 @@ public class MLP
                 .nIn(laterHiddenNodes)
                 .nOut(laterHiddenNodes)
                 .dropOut(dropoutProb)
-                .activation(Activation.RELU6)
+                .activation(Activation.RELU)
                 .build())
             .layer(new OutputLayer.Builder()
                 .nIn(laterHiddenNodes)
                 .nOut(numOutputs)
-                .activation(Activation.TANH)
+                .activation(Activation.IDENTITY)
                 .lossFunction(LossFunctions.LossFunction.MSE)
                 .build())
             .build();
@@ -102,7 +97,7 @@ public class MLP
         System.out.println("Training network...");
         network.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
-        EarlyStoppingConfiguration stopConfig = new EarlyStoppingConfiguration.Builder()
+        EarlyStoppingConfiguration<MultiLayerNetwork> stopConfig = new EarlyStoppingConfiguration.Builder<MultiLayerNetwork>()
             .epochTerminationConditions(new MaxEpochsTerminationCondition(numEpochs))
             .scoreCalculator(new DataSetLossCalculator(validIterator, true))
             .evaluateEveryNEpochs(1)
