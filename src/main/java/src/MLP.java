@@ -7,6 +7,7 @@ import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
+import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
@@ -25,7 +26,6 @@ import org.deeplearning4j.earlystopping.termination.MaxEpochsTerminationConditio
 import org.deeplearning4j.earlystopping.termination.MaxScoreIterationTerminationCondition;
 import org.deeplearning4j.earlystopping.termination.MaxTimeIterationTerminationCondition;
 import org.deeplearning4j.earlystopping.trainer.EarlyStoppingTrainer;
-
 
 import com.opencsv.CSVReader;
 import java.util.ArrayList;
@@ -46,8 +46,6 @@ public class MLP
         System.out.println("Loaded data");
         int numInputs = (int) dataSets.get(0).getFeatures().size(1);
         int numOutputs = (int) dataSets.get(0).getLabels().size(1);
-        int numHiddenNodes = 2048;
-        int laterHiddenNodes = 1024;
         int batchSize = 64;
         double dropoutProb = 0.1;
         SplitTestAndTrain trainAndValid = mainSet.splitTestAndTrain(0.8);
@@ -61,38 +59,35 @@ public class MLP
             .list()
             .layer(new DenseLayer.Builder()
                 .nIn(numInputs)
-                .nOut(numHiddenNodes)
-                .activation(Activation.RELU)
+                .nOut(2048)
+                .activation(Activation.IDENTITY)
                 .build())
             .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(numHiddenNodes)
+                .nIn(2048)
+                .nOut(1024)
                 .dropOut(dropoutProb)
-                .activation(Activation.RELU)
-                .build())
-            .layer(new DenseLayer.Builder()
-                .nIn(numHiddenNodes)
-                .nOut(laterHiddenNodes)
-                .dropOut(dropoutProb)
+                .weightInit(WeightInit.XAVIER)
                 .activation(Activation.RELU6)
                 .build())
             .layer(new DenseLayer.Builder()
-                .nIn(laterHiddenNodes)
-                .nOut(laterHiddenNodes)
+                .nIn(1024)
+                .nOut(512)
                 .dropOut(dropoutProb)
-                .activation(Activation.RELU)
+                .weightInit(WeightInit.XAVIER)
+                .activation(Activation.RELU6)
                 .build())
             .layer(new DenseLayer.Builder()
-                .nIn(laterHiddenNodes)
-                .nOut(laterHiddenNodes)
+                .nIn(512)
+                .nOut(256)
                 .dropOut(dropoutProb)
+                .weightInit(WeightInit.XAVIER)
                 .activation(Activation.RELU6)
                 .build())
             .layer(new OutputLayer.Builder()
-                .nIn(laterHiddenNodes)
+                .nIn(256)
                 .nOut(numOutputs)
-                .activation(Activation.TANH)
-                .lossFunction(LossFunctions.LossFunction.MSE)
+                .activation(Activation.IDENTITY)
+                .lossFunction(LossFunctions.LossFunction.L1)
                 .build())
             .build();
         MultiLayerNetwork network = new MultiLayerNetwork(configuration);
@@ -110,6 +105,8 @@ public class MLP
         EarlyStoppingTrainer earlyStopper = new EarlyStoppingTrainer(stopConfig, network, trainIterator);
         EarlyStoppingResult<MultiLayerNetwork> result = earlyStopper.fit();
         network = result.getBestModel();
+        double score = result.getBestModelScore();
+        System.out.println("Best model score: " + score);
         System.out.println("Training completed.");
         // Save model
         System.out.println("Saving network...");
@@ -133,7 +130,7 @@ public class MLP
             System.out.println("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
-            while ((nextLine = reader.readNext()) != null && dataSets.size() < 1000000)
+            while ((nextLine = reader.readNext()) != null && dataSets.size() < 17000000)
             {
                 double[] input = stringToFen(nextLine[0]);
                 int index = nextLine[1].indexOf("#", 0);
