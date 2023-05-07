@@ -163,7 +163,7 @@ public class MLP
     {
         String[] parts = fen.split(" ");
         String position = parts[0];
-        double[] nums = new double[64];
+        double[] input = new double[12 * 8 * 8];
         int index = 0;
         for (int i = 0; i < position.length(); i++)
         {
@@ -176,11 +176,35 @@ public class MLP
             {}
             else
             {
-                nums[index] = pieceToNum(c);
+                double pieceValue = pieceToNum(c);
+                int colorIndex = Character.isUpperCase(c) ? 0 : 6;
+                int pieceTypeIndex = getPieceTypeIndex(c);
+                input[colorIndex + pieceTypeIndex * 2 * 8 + index] = pieceValue;
                 index++;
             }
         }
-        return nums;
+        return input;
+    }
+
+    private static int getPieceTypeIndex(char c)
+    {
+        switch (c)
+        {
+            case 'P':
+                return 0;
+            case 'N':
+                return 1;
+            case 'B':
+                return 2;
+            case 'R':
+                return 3;
+            case 'Q':
+                return 4;
+            case 'K':
+                return 5;
+            default:
+                return -1;
+        }
     }
 
     private static int pieceToNum(char piece)
