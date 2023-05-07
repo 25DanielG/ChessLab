@@ -130,7 +130,7 @@ public class MLP
             System.out.println("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
-            while ((nextLine = reader.readNext()) != null && dataSets.size() < 17000000)
+            while ((nextLine = reader.readNext()) != null && dataSets.size() < 1000000)
             {
                 double[] input = stringToFen(nextLine[0]);
                 int index = nextLine[1].indexOf("#", 0);
