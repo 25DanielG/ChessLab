@@ -162,49 +162,23 @@ public class MLP
     private static double[] stringToFen(String fen)
     {
         String[] parts = fen.split(" ");
-        String position = parts[0];
-        double[] input = new double[12 * 8 * 8];
+        double[] input = new double[69];
         int index = 0;
-        for (int i = 0; i < position.length(); i++)
+        for (int i = 0; i < parts[0].length(); i++)
         {
-            char c = position.charAt(i);
+            char c = parts[0].charAt(i);
             if (c >= '1' && c <= '8')
             {
                 index += c - '0';
             }
-            else if (c == '/')
-            {}
+            else if (c == '/') {}
             else
             {
-                double pieceValue = pieceToNum(c);
-                int colorIndex = Character.isUpperCase(c) ? 0 : 6;
-                int pieceTypeIndex = getPieceTypeIndex(c);
-                input[colorIndex + pieceTypeIndex * 2 * 8 + index] = pieceValue;
+                input[index] = pieceToNum(c);
                 index++;
             }
         }
         return input;
-    }
-
-    private static int getPieceTypeIndex(char c)
-    {
-        switch (c)
-        {
-            case 'P':
-                return 0;
-            case 'N':
-                return 1;
-            case 'B':
-                return 2;
-            case 'R':
-                return 3;
-            case 'Q':
-                return 4;
-            case 'K':
-                return 5;
-            default:
-                return -1;
-        }
     }
 
     private static int pieceToNum(char piece)
