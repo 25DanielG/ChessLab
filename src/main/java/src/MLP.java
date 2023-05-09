@@ -143,7 +143,7 @@ public class MLP
                 int index = nextLine[1].indexOf("#", 0);
                 if (index != -1)
                 {
-                    nextLine[1] = "100000"; // Assumed max value
+                    nextLine[1] = "5000"; // Assumed max value
                 }
                 else
                 {
@@ -155,7 +155,8 @@ public class MLP
                 }
                 nextLine[1] = nextLine[1].replaceAll("\uFEFF", "");
                 int value = Integer.parseInt(nextLine[1].trim());
-                nextLine[1] = "" + ((2.0 * ((double) value + 100000) / 200000) - 1.0); // Scale the value between -1 and 1 for TANH
+                nextLine[1] = "" + ((2.0 * ((double) value + 5000) / 10000) - 1.0); // Scale the value between -1 and 1 for TANH
+                System.out.println(nextLine[1]);
                 double[] output = {Double.parseDouble(nextLine[1].trim())};
                 INDArray inputArray = Nd4j.create(input, new int[]{1, input.length});
                 INDArray outputArray = Nd4j.create(output, new int[]{1, 1});
