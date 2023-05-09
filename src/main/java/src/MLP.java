@@ -59,8 +59,15 @@ public class MLP
             .list()
             .layer(new DenseLayer.Builder()
                 .nIn(numInputs)
-                .nOut(2048)
+                .nOut(4096)
                 .activation(Activation.IDENTITY)
+                .build())
+            .layer(new DenseLayer.Builder()
+                .nIn(4096)
+                .nOut(2048)
+                .dropOut(dropoutProb)
+                .weightInit(WeightInit.XAVIER)
+                .activation(Activation.RELU6)
                 .build())
             .layer(new DenseLayer.Builder()
                 .nIn(2048)
@@ -86,8 +93,8 @@ public class MLP
             .layer(new OutputLayer.Builder()
                 .nIn(256)
                 .nOut(numOutputs)
-                .activation(Activation.IDENTITY)
-                .lossFunction(LossFunctions.LossFunction.L1)
+                .activation(Activation.TANH)
+                .lossFunction(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
                 .build())
             .build();
         MultiLayerNetwork network = new MultiLayerNetwork(configuration);
@@ -136,14 +143,19 @@ public class MLP
                 int index = nextLine[1].indexOf("#", 0);
                 if (index != -1)
                 {
-                    nextLine[1] = nextLine[1].substring(0, index) + nextLine[1].substring(index + 1, nextLine[1].length());
+                    nextLine[1] = "100000"; // Assumed max value
                 }
-                index = nextLine[1].indexOf("+", 0);
-                if (index != -1)
+                else
                 {
-                    nextLine[1] = nextLine[1].substring(0, index) + nextLine[1].substring(index + 1, nextLine[1].length());
+                    index = nextLine[1].indexOf("+", 0);
+                    if (index != -1)
+                    {
+                        nextLine[1] = nextLine[1].substring(0, index) + nextLine[1].substring(index + 1, nextLine[1].length());
+                    }
                 }
                 nextLine[1] = nextLine[1].replaceAll("\uFEFF", "");
+                int value = Integer.parseInt(nextLine[1].trim());
+                nextLine[1] = "" + ((2.0 * ((double) value + 100000) / 200000) - 1.0); // Scale the value between -1 and 1 for TANH
                 double[] output = {Double.parseDouble(nextLine[1].trim())};
                 INDArray inputArray = Nd4j.create(input, new int[]{1, input.length});
                 INDArray outputArray = Nd4j.create(output, new int[]{1, 1});
