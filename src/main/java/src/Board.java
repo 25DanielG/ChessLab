@@ -335,22 +335,26 @@ public class Board extends BoundedGrid<Piece>
 		String rights = "";
 		if (!whiteKing.getMoved())
 		{
-			if (!wRookKing.getMoved() && whiteKing.isValidCastle(wRookKing.getLocation(), wRookKing.getLocation()))
+			Location loc = new Location(whiteKing.getLocation().getRow(), whiteKing.getLocation().getCol() + 2);
+			if (!wRookKing.getMoved() && whiteKing.isValidCastle(whiteKing.getLocation(), loc))
 			{
 				rights += "K";
 			}
-			if (!wRookQueen.getMoved() && whiteKing.isValidCastle(wRookQueen.getLocation(), wRookQueen.getLocation()))
+			loc = new Location(whiteKing.getLocation().getRow(), whiteKing.getLocation().getCol() - 2);
+			if (!wRookQueen.getMoved() && whiteKing.isValidCastle(whiteKing.getLocation(), loc))
 			{
 				rights += "Q";
 			}
 		}
 		if (!blackKing.getMoved())
 		{
-			if (!bRookKing.getMoved() && blackKing.isValidCastle(bRookKing.getLocation(), bRookKing.getLocation()))
+			Location loc = new Location(blackKing.getLocation().getRow(), blackKing.getLocation().getCol() + 2);
+			if (!bRookKing.getMoved() && blackKing.isValidCastle(blackKing.getLocation(), loc))
 			{
 				rights += "k";
 			}
-			if (!bRookQueen.getMoved() && blackKing.isValidCastle(bRookQueen.getLocation(), bRookQueen.getLocation()))
+			loc = new Location(blackKing.getLocation().getRow(), blackKing.getLocation().getCol() - 2);
+			if (!bRookQueen.getMoved() && blackKing.isValidCastle(blackKing.getLocation(), loc))
 			{
 				rights += "q";
 			}
