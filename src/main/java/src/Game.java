@@ -17,7 +17,7 @@ public class Game
         Board board = new Board();
         if (train)
         {
-            MLP.main(args);
+            Network.main(args);
         }
         Piece blackKing = new King(Color.BLACK, "./img/black_king.gif");
         blackKing.putSelfInGrid(board, new Location(0, 4));
@@ -73,7 +73,7 @@ public class Game
         MultiLayerNetwork network;
         try
         {
-            network = MLP.loadNetwork();
+            network = Network.loadNetwork();
         }
         catch (IOException e)
         {

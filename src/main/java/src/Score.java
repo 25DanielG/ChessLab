@@ -10,7 +10,7 @@ public class Score
 
     public static int networkScore(String FEN)
     {
-        return (int) (src.MLP.score(FEN, network) * 100000);
+        return (int) (src.Network.score(FEN, network) * 100000);
     }
     /**
      * The scoring function to score a boards position, the scoring function relies on a more

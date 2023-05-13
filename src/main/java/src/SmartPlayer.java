@@ -34,7 +34,7 @@ public class SmartPlayer extends Player
         System.out.println("Score: " + best[0] + ", Depth: " + best[2]);
         String FEN = getBoard().toFEN(getColor().equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
         System.out.println("Board: " + FEN);
-        System.out.println("MLP Score: " + src.Score.networkScore(FEN));
+        System.out.println("Network Score: " + src.Score.networkScore(FEN));
         System.out.println("---------------------------------");
         return (Move) best[1];
     }

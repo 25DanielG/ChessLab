@@ -35,7 +35,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 @SuppressWarnings("unchecked")
-public class MLP
+public class Network
 {
     public static void main(String[] args)
     {
