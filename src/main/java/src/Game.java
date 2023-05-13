@@ -7,7 +7,7 @@ public class Game
 {
     static King wKing, bKing;
     static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
-    static final boolean train = true;
+    static final boolean train = false;
     /**
      * The main method of the chess game that sets up the chess board and the two players.
      * @param args optional arguments that can be passed via the terminal
@@ -80,7 +80,8 @@ public class Game
             e.printStackTrace();
             return;
         }
-        play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer", network));
+        Score.network = network;
+        play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
         // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new HumanPlayer(board, display, Color.BLACK, "Human"));
         // play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human 1"), new HumanPlayer(board, display, Color.BLACK, "Human 2"));
         // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));

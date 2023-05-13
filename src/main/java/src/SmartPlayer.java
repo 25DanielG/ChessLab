@@ -12,18 +12,15 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
  */
 public class SmartPlayer extends Player 
 {
-    private MultiLayerNetwork MLP;
-
     /**
      * Default constructor for Smart Player
      * @param board the board that player belongs
      * @param color the color of pieces that the player plays with
      * @param name the name of the player
      */
-    public SmartPlayer(Board board, Color color, String name, MultiLayerNetwork MLP)
+    public SmartPlayer(Board board, Color color, String name)
     {
         super(board, "SmartPlayer", color);
-        this.MLP = MLP;
     }
 
     /**
@@ -34,10 +31,10 @@ public class SmartPlayer extends Player
     {
         Object[] best = (findBestMove(6, 15000));
         System.out.println("---------------------------------");
-        System.out.println("Score: " + best[0] + ", Line: " + best[2] + ", Depth: " + best[3]);
+        System.out.println("Score: " + best[0] + ", Depth: " + best[2]);
         String FEN = getBoard().toFEN(getColor().equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
         System.out.println("Board: " + FEN);
-        System.out.println("MLP Score: " + src.MLP.score(FEN, MLP));
+        System.out.println("MLP Score: " + src.Score.networkScore(FEN));
         System.out.println("---------------------------------");
         return (Move) best[1];
     }
@@ -54,7 +51,6 @@ public class SmartPlayer extends Player
     public Object[] findBestMove(int maxDepth, long timeout)
     {
         Move bestMove = null;
-        Move meanest = null;
         int bestScore = Integer.MIN_VALUE;
         Object[] result = null;
         int maxDepthReached = 0;
@@ -87,12 +83,11 @@ public class SmartPlayer extends Player
                 maxDepthReached = depth;
                 bestMove = (Move) result[1];
                 bestScore = (int) result[0];
-                meanest = (Move) result[2];
             }
         }
         timerThread.interrupt();
-        return new Object[] {bestScore, bestMove, meanest, maxDepthReached};
-    }    
+        return new Object[] {bestScore, bestMove, maxDepthReached};
+    }
     
     /**
      * Finds the value of the worst response that can be returned to the smartest player by looking
@@ -109,7 +104,8 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
         }
         Color oppositeColor = getColor().equals(Color.BLACK) ? Color.WHITE : Color.BLACK;
         Vector<Move> moves = getBoard().allMoves(oppositeColor);
@@ -164,7 +160,8 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
         }
         if (Thread.currentThread().isInterrupted())
         {
@@ -174,7 +171,6 @@ public class SmartPlayer extends Player
         moves.sort((m1, m2) -> -Integer.compare(m1.getScore(), m2.getScore()));
         int max = Integer.MIN_VALUE;
         Move best = null;
-        Move meanest = null;
         int previousScore = Score.quickScore(getBoard(), getColor());
         for (Move move : moves)
         {
@@ -196,7 +192,6 @@ public class SmartPlayer extends Player
             {
                 max = score;
                 best = move;
-                meanest = (Move) p[1];
             }
             getBoard().undoMove(move);
             if (max > alpha)
@@ -227,16 +222,18 @@ public class SmartPlayer extends Player
                 }
             }
         }
-        return new Object[] {max, best, meanest};
+        return new Object[] {max, best};
     }
     
     private Object[] quiescenceSearch(int depth, int alpha, int beta)
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
+            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
         }
-        int stand_pat = Score.mainScore(getBoard(), getColor());
+        // int stand_pat = Score.mainScore(getBoard(), getColor());
+        int stand_pat = Score.networkScore(getBoard().toFEN(getColor()));
         if (stand_pat >= beta)
         {
             return new Object[] {stand_pat, null};
@@ -251,7 +248,8 @@ public class SmartPlayer extends Player
         for (Move move : allMoves.parallelStream().toArray(Move[]::new))
         {
             getBoard().executeMove(move);
-            int score = -Score.mainScore(getBoard(), getColor());
+            // int score = -Score.mainScore(getBoard(), getColor());
+            int score = -Score.networkScore(getBoard().toFEN(getColor()));
             getBoard().undoMove(move);
             if (score >= beta)
             {

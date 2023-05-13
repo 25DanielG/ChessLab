@@ -2,9 +2,16 @@ package src;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Vector;
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 public class Score
 {
+    public static MultiLayerNetwork network;
+
+    public static int networkScore(String FEN)
+    {
+        return (int) (src.MLP.score(FEN, network) * 100000);
+    }
     /**
      * The scoring function to score a boards position, the scoring function relies on a more
      *      efficient piece evaluation point system as well as the mobility of each piece.
