@@ -7,7 +7,7 @@ public class Game
 {
     static King wKing, bKing;
     static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
-    static final boolean train = false;
+    static final boolean train = true;
     /**
      * The main method of the chess game that sets up the chess board and the two players.
      * @param args optional arguments that can be passed via the terminal

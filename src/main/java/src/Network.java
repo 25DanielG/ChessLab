@@ -14,7 +14,9 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
+import org.nd4j.linalg.dataset.api.MultiDataSet;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
+import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
@@ -40,22 +42,17 @@ public class Network
     public static void main(String[] args)
     {
         // Load data
-        Object[] sets = loadData();
-        List<DataSet> dataSets1 = (List<DataSet>) sets[0];
-        List<DataSet> dataSets2 = (List<DataSet>) sets[1];
-        DataSet mainSet1 = DataSet.merge(dataSets1);
-        DataSet mainSet2 = DataSet.merge(dataSets2);
+        List<org.nd4j.linalg.dataset.MultiDataSet> data = loadData();
+        org.nd4j.linalg.dataset.MultiDataSet mainSet = org.nd4j.linalg.dataset.MultiDataSet.merge(data);
         System.out.println("Loaded data");
-        int numInputs = (int) dataSets1.get(0).getFeatures().size(1);
-        int numOutputs = (int) dataSets1.get(0).getLabels().size(1);
+        int numInputs = (int) mainSet.getFeatures(0).size(1);
+        int numOutputs = (int) mainSet.getLabels(0).size(1);
         int batchSize = 64;
         double dropoutProb = 0.1;
-        SplitTestAndTrain trainAndValid1 = mainSet1.splitTestAndTrain(0.8);
-        DataSetIterator trainIterator1 = new ListDataSetIterator<DataSet>(trainAndValid1.getTrain().asList(), batchSize);
-        DataSetIterator validIterator1 = new ListDataSetIterator<DataSet>(trainAndValid1.getTest().asList());
-        SplitTestAndTrain trainAndValid2 = mainSet2.splitTestAndTrain(0.8);
-        DataSetIterator trainIterator2 = new ListDataSetIterator<DataSet>(trainAndValid2.getTrain().asList(), batchSize);
-        DataSetIterator validIterator2 = new ListDataSetIterator<DataSet>(trainAndValid2.getTest().asList());
+        SplitTestAndTrain trainAndValid = ((org.nd4j.linalg.dataset.api.DataSet) mainSet).splitTestAndTrain(0.8);
+        DataSetIterator trainIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTrain().asList(), batchSize);
+        DataSetIterator validIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTest().asList());
+
         // Architecture
         NeuralNetConfiguration.Builder layerBuilder = new NeuralNetConfiguration.Builder()
             .seed(123)
@@ -103,14 +100,12 @@ public class Network
         System.out.println("Training network...");
         graph.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
-        DataSetIterator validIterator = new CustomDataSetIterator(validIterator1, validIterator2);
         EarlyStoppingConfiguration<ComputationGraph> stopConfig = new EarlyStoppingConfiguration.Builder<ComputationGraph>()
             .epochTerminationConditions(new MaxEpochsTerminationCondition(numEpochs))
             .scoreCalculator(new DataSetLossCalculator(validIterator, true))
             .evaluateEveryNEpochs(1)
             .build();
-        DataSetIterator multiTrainIterator = new CustomDataSetIterator(trainIterator1, trainIterator2);
-        EarlyStoppingGraphTrainer trainer = new EarlyStoppingGraphTrainer(stopConfig, graph, multiTrainIterator);
+        EarlyStoppingGraphTrainer trainer = new EarlyStoppingGraphTrainer(stopConfig, graph, trainIterator);
         EarlyStoppingResult<ComputationGraph> result = trainer.fit();
         graph = result.getBestModel();
         double score = result.getBestModelScore();
@@ -130,48 +125,48 @@ public class Network
         }
     }
 
-    private static Object[] loadData() {
-        List<DataSet> dataSets1 = new ArrayList<DataSet>();
-        List<DataSet> dataSets2 = new ArrayList<DataSet>();
-        try {
+    private static List<org.nd4j.linalg.dataset.MultiDataSet> loadData()
+    {
+        List<org.nd4j.linalg.dataset.MultiDataSet> dataSetList = new ArrayList<>();
+        try
+        {
             System.out.println("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
-            while ((nextLine = reader.readNext()) != null && dataSets1.size() < 10000) {
+            while ((nextLine = reader.readNext()) != null && dataSetList.size() < 10000)
+            {
                 double[] fen = stringToFen(nextLine[0]);
                 int index = nextLine[1].indexOf("#", 0);
-                if (index != -1) {
+                if (index != -1)
+                {
                     nextLine[1] = "5000"; // Assumed max value
-                } else {
+                }
+                else
+                {
                     index = nextLine[1].indexOf("+", 0);
-                    if (index != -1) {
+                    if (index != -1)
+                    {
                         nextLine[1] = nextLine[1].substring(0, index) + nextLine[1].substring(index + 1, nextLine[1].length());
                     }
                 }
                 nextLine[1] = nextLine[1].replaceAll("\uFEFF", "");
                 int value = Integer.parseInt(nextLine[1].trim());
                 nextLine[1] = "" + ((2.0 * ((double) value + 5000) / 10000) - 1.0); // Scale the value between -1 and 1 for TANH
-                double[] output = {Double.parseDouble(nextLine[1].trim())};
-    
+                double output = Double.parseDouble(nextLine[1].trim());
                 int halfLength = fen.length / 2; // Split FEN string
-                double[] inputBlack = Arrays.copyOfRange(fen, 0, halfLength);
-                double[] inputWhite = Arrays.copyOfRange(fen, halfLength, fen.length);
-    
-                INDArray inputArrayBlack = Nd4j.create(inputBlack, new int[]{1, inputBlack.length});
-                INDArray inputArrayWhite = Nd4j.create(inputWhite, new int[]{1, inputWhite.length});
-                INDArray outputArray = Nd4j.create(output, new int[]{1, 1});
-    
-                DataSet dataSetBlack = new DataSet(inputArrayBlack, outputArray);
-                DataSet dataSetWhite = new DataSet(inputArrayWhite, outputArray);
-    
-                dataSets1.add(dataSetBlack);
-                dataSets2.add(dataSetWhite);
+                INDArray inputWhite = Nd4j.create(fen, new int[] {1, halfLength});
+                INDArray inputBlack = Nd4j.create(fen, new int[] {1, halfLength}, 'c');
+                INDArray outputArray = Nd4j.create(new double[] {output}, new int[]{1, 1});
+                org.nd4j.linalg.dataset.MultiDataSet multiDataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[]{inputWhite, inputBlack}, new INDArray[]{outputArray});
+                dataSetList.add(multiDataSet);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
-        System.out.println("Data sets size: " + dataSets1.size());
-        return new Object[] {dataSets1, dataSets2};
+        System.out.println("Data sets size: " + dataSetList.size());
+        return dataSetList;
     }
     
     private static double[] stringToFen(String fen)
