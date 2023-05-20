@@ -1,6 +1,7 @@
 package src;
 import java.awt.*;
 import java.io.IOException;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 public class Game
@@ -70,7 +71,7 @@ public class Game
         BoardDisplay display = new BoardDisplay(board);
         wKing = (King) whiteKing;
         bKing = (King) blackKing;
-        MultiLayerNetwork network;
+        ComputationGraph network;
         try
         {
             network = Network.loadNetwork();

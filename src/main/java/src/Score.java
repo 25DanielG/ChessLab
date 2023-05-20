@@ -2,11 +2,12 @@ package src;
 import java.awt.Color;
 import java.util.Arrays;
 import java.util.Vector;
+import org.deeplearning4j.nn.graph.ComputationGraph;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 public class Score
 {
-    public static MultiLayerNetwork network;
+    public static ComputationGraph network;
 
     public static int networkScore(String FEN)
     {

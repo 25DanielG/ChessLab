@@ -1,5 +1,7 @@
 package src;
 
+import org.deeplearning4j.datasets.datavec.RecordReaderMultiDataSetIterator;
+import org.deeplearning4j.datasets.iterator.IteratorMultiDataSetIterator;
 import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -12,6 +14,7 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.dataset.AsyncMultiDataSetIterator;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.MultiDataSet;
@@ -32,27 +35,25 @@ import com.opencsv.CSVReader;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+
 @SuppressWarnings("unchecked")
 public class Network
 {
     public static void main(String[] args)
     {
         // Load data
-        List<org.nd4j.linalg.dataset.MultiDataSet> data = loadData();
+        List<MultiDataSet> data = loadData();
         org.nd4j.linalg.dataset.MultiDataSet mainSet = org.nd4j.linalg.dataset.MultiDataSet.merge(data);
         System.out.println("Loaded data");
         int numInputs = (int) mainSet.getFeatures(0).size(1);
         int numOutputs = (int) mainSet.getLabels(0).size(1);
         int batchSize = 64;
         double dropoutProb = 0.1;
-        SplitTestAndTrain trainAndValid = ((org.nd4j.linalg.dataset.api.DataSet) mainSet).splitTestAndTrain(0.8);
-        DataSetIterator trainIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTrain().asList(), batchSize);
-        DataSetIterator validIterator = new ListDataSetIterator<DataSet>(trainAndValid.getTest().asList());
-
         // Architecture
         NeuralNetConfiguration.Builder layerBuilder = new NeuralNetConfiguration.Builder()
             .seed(123)
@@ -61,12 +62,12 @@ public class Network
         GraphBuilder mergedLayer = layerBuilder.graphBuilder()
             .addInputs("input1", "input2")
             .addLayer("dense1", new DenseLayer.Builder()
-                .nIn(numInputs / 2)
+                .nIn(numInputs)
                 .nOut(4096)
                 .activation(Activation.IDENTITY)
                 .build(), "input1")
             .addLayer("dense2", new DenseLayer.Builder()
-                .nIn(numInputs / 2)
+                .nIn(numInputs)
                 .nOut(4096)
                 .activation(Activation.IDENTITY)
                 .build(), "input2")
@@ -100,17 +101,16 @@ public class Network
         System.out.println("Training network...");
         graph.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
-        EarlyStoppingConfiguration<ComputationGraph> stopConfig = new EarlyStoppingConfiguration.Builder<ComputationGraph>()
-            .epochTerminationConditions(new MaxEpochsTerminationCondition(numEpochs))
-            .scoreCalculator(new DataSetLossCalculator(validIterator, true))
-            .evaluateEveryNEpochs(1)
-            .build();
-        EarlyStoppingGraphTrainer trainer = new EarlyStoppingGraphTrainer(stopConfig, graph, trainIterator);
-        EarlyStoppingResult<ComputationGraph> result = trainer.fit();
-        graph = result.getBestModel();
-        double score = result.getBestModelScore();
-        System.out.println("Best model score: " + score);
-        System.out.println("Training completed.");
+        for (int epoch = 0; epoch < numEpochs; epoch++) {
+            System.out.println("Epoch " + epoch + " of " + numEpochs + "\r");
+            Iterator<MultiDataSet> iterator = data.iterator();
+            IteratorMultiDataSetIterator trainIterator = new IteratorMultiDataSetIterator(iterator, batchSize);
+            while (trainIterator.hasNext()) {
+                MultiDataSet dataSet = trainIterator.next();
+                graph.fit(dataSet);
+            }
+        }
+        System.out.println("\nTraining completed.");
         // Save model
         System.out.println("Saving network...");
         File locationToSave = new File("trainedMLP.zip");
@@ -125,9 +125,9 @@ public class Network
         }
     }
 
-    private static List<org.nd4j.linalg.dataset.MultiDataSet> loadData()
+    private static List<MultiDataSet> loadData()
     {
-        List<org.nd4j.linalg.dataset.MultiDataSet> dataSetList = new ArrayList<>();
+        List<MultiDataSet> dataSetList = new ArrayList<>();
         try
         {
             System.out.println("Loading data...");
@@ -154,10 +154,10 @@ public class Network
                 nextLine[1] = "" + ((2.0 * ((double) value + 5000) / 10000) - 1.0); // Scale the value between -1 and 1 for TANH
                 double output = Double.parseDouble(nextLine[1].trim());
                 int halfLength = fen.length / 2; // Split FEN string
-                INDArray inputWhite = Nd4j.create(fen, new int[] {1, halfLength});
-                INDArray inputBlack = Nd4j.create(fen, new int[] {1, halfLength}, 'c');
+                INDArray inputWhite = Nd4j.create(Arrays.copyOfRange(fen, 0, halfLength), new int[] {1, halfLength});
+                INDArray inputBlack = Nd4j.create(Arrays.copyOfRange(fen, halfLength + 1, fen.length), new int[] {1, halfLength}, 'c');
                 INDArray outputArray = Nd4j.create(new double[] {output}, new int[]{1, 1});
-                org.nd4j.linalg.dataset.MultiDataSet multiDataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[]{inputWhite, inputBlack}, new INDArray[]{outputArray});
+                org.nd4j.linalg.dataset.MultiDataSet multiDataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[] {inputWhite, inputBlack}, new INDArray[]{outputArray});
                 dataSetList.add(multiDataSet);
             }
         }
@@ -224,19 +224,21 @@ public class Network
         }
     }
 
-    public static MultiLayerNetwork loadNetwork() throws IOException
+    public static ComputationGraph loadNetwork() throws IOException
     {
-        MultiLayerNetwork network = ModelSerializer.restoreMultiLayerNetwork("trainedMLP.zip");
+        ComputationGraph network = ModelSerializer.restoreComputationGraph("trainedMLP.zip");
         return network;
     }
 
-    public static double score(String fen, MultiLayerNetwork network)
+    public static double score(String fen, ComputationGraph network)
     {
         double[] input = stringToFen(fen);
-        int nIn = input.length;
-        INDArray inputMatrix = Nd4j.create(input).reshape(1, nIn);
-        INDArray output = network.output(inputMatrix);
-        double score = output.getDouble(0);
+        int halfLength = input.length / 2;
+        INDArray inputWhite = Nd4j.create(Arrays.copyOfRange(input, 0, halfLength), new int[] {1, halfLength});
+        INDArray inputBlack = Nd4j.create(Arrays.copyOfRange(input, halfLength + 1, input.length), new int[] {1, halfLength}, 'c');
+        org.nd4j.linalg.dataset.MultiDataSet dataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[] {inputWhite, inputBlack}, null);
+        INDArray[] output = network.output(dataSet.getFeatures());
+        double score = output[0].getDouble(0);
         return score;
-    }
+    }    
 }
