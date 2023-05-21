@@ -41,7 +41,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
-@SuppressWarnings("unchecked")
 public class Network
 {
     public static void main(String[] args)
@@ -101,11 +100,13 @@ public class Network
         System.out.println("Training network...");
         graph.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
-        for (int epoch = 0; epoch < numEpochs; epoch++) {
+        for (int epoch = 0; epoch < numEpochs; epoch++)
+        {
             System.out.println("Epoch " + epoch + " of " + numEpochs + "\r");
             Iterator<MultiDataSet> iterator = data.iterator();
             IteratorMultiDataSetIterator trainIterator = new IteratorMultiDataSetIterator(iterator, batchSize);
-            while (trainIterator.hasNext()) {
+            while (trainIterator.hasNext())
+            {
                 MultiDataSet dataSet = trainIterator.next();
                 graph.fit(dataSet);
             }
@@ -133,7 +134,7 @@ public class Network
             System.out.println("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
-            while ((nextLine = reader.readNext()) != null && dataSetList.size() < 10000)
+            while ((nextLine = reader.readNext()) != null && dataSetList.size() < 1000000)
             {
                 double[] fen = stringToFen(nextLine[0]);
                 int index = nextLine[1].indexOf("#", 0);
