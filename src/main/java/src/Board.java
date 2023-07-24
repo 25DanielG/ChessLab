@@ -155,7 +155,6 @@ public class Board extends BoundedGrid<Piece>
 		return strategicMoves;
 	}
 	
-
 	/**
 	 * Calculates the score of a move based on value of piece being moved, captured piece (if any)
 	 * 		, center squares, and edge squares.

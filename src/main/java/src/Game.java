@@ -2,7 +2,6 @@ package src;
 import java.awt.*;
 import java.io.IOException;
 import org.deeplearning4j.nn.graph.ComputationGraph;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 public class Game
 {

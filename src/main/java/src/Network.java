@@ -1,40 +1,26 @@
 package src;
 
-import org.deeplearning4j.datasets.datavec.RecordReaderMultiDataSetIterator;
 import org.deeplearning4j.datasets.iterator.IteratorMultiDataSetIterator;
-import org.deeplearning4j.datasets.iterator.impl.ListDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration.GraphBuilder;
 import org.deeplearning4j.nn.conf.layers.DenseLayer;
 import org.deeplearning4j.nn.conf.layers.OutputLayer;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.dataset.AsyncMultiDataSetIterator;
-import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.dataset.SplitTestAndTrain;
 import org.nd4j.linalg.dataset.api.MultiDataSet;
-import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
-import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Sgd;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
-import org.deeplearning4j.earlystopping.EarlyStoppingConfiguration;
-import org.deeplearning4j.earlystopping.EarlyStoppingResult;
-import org.deeplearning4j.earlystopping.scorecalc.DataSetLossCalculator;
-import org.deeplearning4j.earlystopping.termination.MaxEpochsTerminationCondition;
-import org.deeplearning4j.earlystopping.trainer.EarlyStoppingGraphTrainer;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration;
 import org.deeplearning4j.nn.conf.graph.MergeVertex;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import com.opencsv.CSVReader;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.io.File;
 import java.io.FileReader;
@@ -43,6 +29,14 @@ import java.util.List;
 
 public class Network
 {
+    private static final String PIECE_SYMBOLS = "PNBRQKpnbrqk";
+    private static final String CASTLING_SYMBOLS = "KQkq";
+    private static final int BOARD_SIZE = 64;
+    private static final int NUM_PIECE_TYPES = 6;
+    private static final int NUM_CASTLING_RIGHTS = 4;
+    private static final int NUM_FILES = 8;
+    private static final int NUM_RANKS = 8;
+    private static final int INPUT_SIZE = 64 * 320;
     public static void main(String[] args)
     {
         // Load data
@@ -62,17 +56,17 @@ public class Network
             .addInputs("input1", "input2")
             .addLayer("dense1", new DenseLayer.Builder()
                 .nIn(numInputs)
-                .nOut(4096)
-                .activation(Activation.IDENTITY)
+                .nOut(2048)
+                .activation(Activation.RELU)
                 .build(), "input1")
             .addLayer("dense2", new DenseLayer.Builder()
                 .nIn(numInputs)
-                .nOut(4096)
-                .activation(Activation.IDENTITY)
+                .nOut(2048)
+                .activation(Activation.RELU)
                 .build(), "input2")
             .addVertex("merge", new MergeVertex(), "dense1", "dense2")
             .addLayer("dense3", new DenseLayer.Builder()
-                .nIn(8192)
+                .nIn(4096)
                 .nOut(2048)
                 .dropOut(dropoutProb)
                 .weightInit(WeightInit.XAVIER)
@@ -89,7 +83,7 @@ public class Network
                 .nIn(1024)
                 .nOut(numOutputs)
                 .activation(Activation.TANH)
-                .lossFunction(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
+                .lossFunction(LossFunctions.LossFunction.MSE)
                 .build(), "dense4")
             .setOutputs("output");
         ComputationGraphConfiguration config = mergedLayer.build();
@@ -136,11 +130,13 @@ public class Network
             String[] nextLine = reader.readNext();
             while ((nextLine = reader.readNext()) != null && dataSetList.size() < 1000000)
             {
-                double[] fen = stringToFen(nextLine[0]);
+                double[][] fen = halfKP(nextLine[0]);
+
+                // Handling special cases
                 int index = nextLine[1].indexOf("#", 0);
                 if (index != -1)
                 {
-                    nextLine[1] = "5000"; // Assumed max value
+                    nextLine[1] = "5000";
                 }
                 else
                 {
@@ -151,12 +147,14 @@ public class Network
                     }
                 }
                 nextLine[1] = nextLine[1].replaceAll("\uFEFF", "");
-                int value = Integer.parseInt(nextLine[1].trim());
-                nextLine[1] = "" + ((2.0 * ((double) value + 5000) / 10000) - 1.0); // Scale the value between -1 and 1 for TANH
-                double output = Double.parseDouble(nextLine[1].trim());
-                int halfLength = fen.length / 2; // Split FEN string
-                INDArray inputWhite = Nd4j.create(Arrays.copyOfRange(fen, 0, halfLength), new int[] {1, halfLength});
-                INDArray inputBlack = Nd4j.create(Arrays.copyOfRange(fen, halfLength + 1, fen.length), new int[] {1, halfLength}, 'c');
+
+                double value = Double.parseDouble(nextLine[1]);
+                
+                // Scale the value between -1 and 1 for TANH
+                double output = 2.0 * (value / 5000.0) - 1.0;
+
+                INDArray inputWhite = Nd4j.create(fen[0], new int[] {1, INPUT_SIZE});
+                INDArray inputBlack = Nd4j.create(fen[1], new int[] {1, INPUT_SIZE});
                 INDArray outputArray = Nd4j.create(new double[] {output}, new int[]{1, 1});
                 org.nd4j.linalg.dataset.MultiDataSet multiDataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[] {inputWhite, inputBlack}, new INDArray[]{outputArray});
                 dataSetList.add(multiDataSet);
@@ -170,59 +168,56 @@ public class Network
         return dataSetList;
     }
     
-    private static double[] stringToFen(String fen)
-    {
+    private static double[][] halfKP(String fen) {
+        double[] whiteInput = new double[INPUT_SIZE];
+        double[] blackInput = new double[INPUT_SIZE];
+        
         String[] parts = fen.split(" ");
-        double[] input = new double[69];
-        int index = 0;
-        for (int i = 0; i < parts[0].length(); i++)
-        {
-            char c = parts[0].charAt(i);
-            if (c >= '1' && c <= '8')
-            {
-                index += c - '0';
-            }
-            else if (c == '/') {}
-            else
-            {
-                input[index] = pieceToNum(c);
-                index++;
+        String board = parts[0];
+        int squareIndex = 0;
+        int whiteKingPosition = -1;
+        int blackKingPosition = -1;
+    
+        // First pass to find the king positions
+        for (int i = 0; i < board.length(); i++) {
+            char c = board.charAt(i);
+            if (c == 'K') {
+                whiteKingPosition = squareIndex;
+            } else if (c == 'k') {
+                blackKingPosition = squareIndex;
+            } else if (Character.isDigit(c)) {
+                squareIndex += c - '0';
+            } else if (c != '/') {
+                squareIndex++;
             }
         }
-        return input;
-    }
+        squareIndex = 0;
 
+        // Second pass to set the input values
+        for (int i = 0; i < board.length(); i++) {
+            char c = board.charAt(i);
+            if (Character.isDigit(c)) {
+                squareIndex += c - '0';
+            } else if (c != '/' && c != 'K' && c != 'k') {
+                int pieceIndex = pieceToNum(c);
+                if (Character.isUpperCase(c)) {
+                    blackInput[blackKingPosition * 320 + pieceIndex * 64 + squareIndex] = 1;
+                } else {
+                    whiteInput[whiteKingPosition * 320 + pieceIndex * 64 + squareIndex] = 1;
+                }
+                squareIndex++;
+            } else if (c != '/') {
+                squareIndex++;
+            }
+        }
+        
+        return new double[][] {whiteInput, blackInput};
+    }
+    
     private static int pieceToNum(char piece)
     {
-        switch(piece)
-        {
-            case 'P':
-                return 1;
-            case 'N':
-                return 2;
-            case 'B':
-                return 3;
-            case 'R':
-                return 4;
-            case 'Q':
-                return 5;
-            case 'K':
-                return 6;
-            case 'p':
-                return -1;
-            case 'n':
-                return -2;
-            case 'b':
-                return -3;
-            case 'r':
-                return -4;
-            case 'q':
-                return -5;
-            case 'k':
-                return -6;
-            default:
-                return 0;
-        }
+        String pieces = "PpNnBbRrQqKk";
+        return pieces.indexOf(piece) / 2;
     }
 
     public static ComputationGraph loadNetwork() throws IOException
@@ -233,13 +228,17 @@ public class Network
 
     public static double score(String fen, ComputationGraph network)
     {
-        double[] input = stringToFen(fen);
-        int halfLength = input.length / 2;
-        INDArray inputWhite = Nd4j.create(Arrays.copyOfRange(input, 0, halfLength), new int[] {1, halfLength});
-        INDArray inputBlack = Nd4j.create(Arrays.copyOfRange(input, halfLength + 1, input.length), new int[] {1, halfLength}, 'c');
+        double[][] fenData = halfKP(fen);
+        double[] whiteFeatures = fenData[0];
+        double[] blackFeatures = fenData[1];
+        
+        int halfLength = blackFeatures.length;
+        INDArray inputWhite = Nd4j.create(whiteFeatures, new int[] {1, halfLength});
+        INDArray inputBlack = Nd4j.create(blackFeatures, new int[] {1, halfLength});
+        
         org.nd4j.linalg.dataset.MultiDataSet dataSet = new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[] {inputWhite, inputBlack}, null);
-        INDArray[] output = network.output(dataSet.getFeatures());
+        INDArray[] output = network.output(dataSet.getFeatures(0), dataSet.getFeatures(1));
         double score = output[0].getDouble(0);
         return score;
-    }    
+    }
 }

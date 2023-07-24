@@ -1,8 +1,6 @@
 package src;
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.Vector;
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 
 /**
  * A smart player utilizing minimax to play chess very well. The player has dynamic depth and uses
@@ -54,8 +52,6 @@ public class SmartPlayer extends Player
         int bestScore = Integer.MIN_VALUE;
         Object[] result = null;
         int maxDepthReached = 0;
-        int alpha = Integer.MIN_VALUE;
-        int beta = Integer.MAX_VALUE;
         Thread currentThread = Thread.currentThread();
         Thread timerThread = new Thread(() -> {
             try
@@ -73,7 +69,7 @@ public class SmartPlayer extends Player
         for (int depth = 2; depth <= maxDepth; depth++)
         {
             long time = System.currentTimeMillis();
-            result = valueOfBestMove(depth, alpha, beta);
+            result = valueOfBestMove(depth, Integer.MIN_VALUE, Integer.MAX_VALUE);
             if (!Thread.currentThread().isInterrupted())
             {
                 System.out.println("Ran depth " + depth + " in " + (System.currentTimeMillis() - time) + "ms");
@@ -104,7 +100,6 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
             return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
         }
         Color oppositeColor = getColor().equals(Color.BLACK) ? Color.WHITE : Color.BLACK;
@@ -112,16 +107,9 @@ public class SmartPlayer extends Player
         moves.sort((m1, m2) -> Integer.compare(m1.getScore(), m2.getScore()));
         int min = Integer.MAX_VALUE;
         Move best = null;
-        int previousScore = Score.quickScore(getBoard(), oppositeColor);
         for (Move move : moves)
         {
             getBoard().executeMove(move);
-            int quickScored = Score.quickScore(getBoard(), oppositeColor);
-            if (previousScore - quickScored > 500)
-            {
-                getBoard().undoMove(move);
-                continue;
-            }
             Object[] p = valueOfBestMove(depth - 1, alpha, beta);
             if (p == null)
             {
@@ -160,7 +148,6 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
             return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
         }
         if (Thread.currentThread().isInterrupted())
@@ -171,16 +158,9 @@ public class SmartPlayer extends Player
         moves.sort((m1, m2) -> -Integer.compare(m1.getScore(), m2.getScore()));
         int max = Integer.MIN_VALUE;
         Move best = null;
-        int previousScore = Score.quickScore(getBoard(), getColor());
         for (Move move : moves)
         {
             getBoard().executeMove(move);
-            int quickScored = Score.quickScore(getBoard(), getColor());
-            if (previousScore - quickScored > 500)
-            {
-                getBoard().undoMove(move);
-                continue;
-            }
             Object[] p = valueOfMeanestResponse(depth - 1, alpha, beta);
             if (p == null)
             {
@@ -203,27 +183,28 @@ public class SmartPlayer extends Player
                 break;
             }
         }
-        // Quiescence search
-        if (depth == 1)
-        {
-            Object[] q = quiescenceSearch(4, alpha, beta);
-            if (q != null)
-            {
-                int score = (int) q[0];
-                Move move = (Move) q[1];
-                if (score >= beta)
-                {
-                    return new Object[] {score, null};
-                }
-                if (score > alpha)
-                {
-                    alpha = score;
-                    best = move;
-                }
-            }
-        }
         return new Object[] {max, best};
     }
+
+    /* // Quiescence search
+    if (depth == 1)
+    {
+        Object[] q = quiescenceSearch(4, alpha, beta);
+        if (q != null)
+        {
+            int score = (int) q[0];
+            Move move = (Move) q[1];
+            if (score >= beta)
+            {
+                return new Object[] {score, null};
+            }
+            if (score > alpha)
+            {
+                alpha = score;
+                best = move;
+            }
+        }
+    } */
     
     private Object[] quiescenceSearch(int depth, int alpha, int beta)
     {
