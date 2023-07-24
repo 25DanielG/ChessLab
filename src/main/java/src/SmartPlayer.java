@@ -1,6 +1,8 @@
 package src;
 import java.awt.Color;
 import java.util.Vector;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A smart player utilizing minimax to play chess very well. The player has dynamic depth and uses
@@ -8,8 +10,10 @@ import java.util.Vector;
  * @author Daniel Gergov
  * @version 3/31/23
  */
-public class SmartPlayer extends Player 
+public class SmartPlayer extends Player
 {
+    private static final Logger logger = LogManager.getLogger(SmartPlayer.class);
+
     /**
      * Default constructor for Smart Player
      * @param board the board that player belongs
@@ -28,12 +32,12 @@ public class SmartPlayer extends Player
     public Move nextMove() 
     {
         Object[] best = (findBestMove(6, 15000));
-        System.out.println("---------------------------------");
-        System.out.println("Score: " + best[0] + ", Depth: " + best[2]);
+        logger.debug("---------------------------------");
+        logger.debug("Score: " + best[0] + ", Depth: " + best[2]);
         String FEN = getBoard().toFEN(getColor().equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
-        System.out.println("Board: " + FEN);
-        System.out.println("Network Score: " + src.Score.networkScore(FEN));
-        System.out.println("---------------------------------");
+        logger.debug("Board: " + FEN);
+        logger.debug("Network Score: " + src.Score.networkScore(FEN));
+        logger.debug("---------------------------------");
         return (Move) best[1];
     }
 
@@ -57,7 +61,7 @@ public class SmartPlayer extends Player
             try
             {
                 Thread.sleep(timeout);
-                System.out.println("Time limit reached!");
+                logger.debug("Time limit reached!");
                 currentThread.interrupt();
             }
             catch (InterruptedException e)
@@ -72,7 +76,7 @@ public class SmartPlayer extends Player
             result = valueOfBestMove(depth, Integer.MIN_VALUE, Integer.MAX_VALUE);
             if (!Thread.currentThread().isInterrupted())
             {
-                System.out.println("Ran depth " + depth + " in " + (System.currentTimeMillis() - time) + "ms");
+                logger.debug("Ran depth " + depth + " in " + (System.currentTimeMillis() - time) + "ms");
             }
             if (result != null && depth > maxDepthReached)
             {

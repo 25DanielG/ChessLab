@@ -125,7 +125,6 @@ public class BoardDisplay implements ActionListener
 				Icon icon = null;
 				if (piece != null)
 				{
-					//System.out.println(loc);
 					grid[row][col].setForeground(piece.getColor());
 					icon = new ImageIcon(piece.getImageFileName());
 				}

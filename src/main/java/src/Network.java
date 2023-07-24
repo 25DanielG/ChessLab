@@ -27,8 +27,13 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Network
 {
+    private static final Logger logger = LogManager.getLogger(Network.class);
+
     private static final String PIECE_SYMBOLS = "PNBRQKpnbrqk";
     private static final String CASTLING_SYMBOLS = "KQkq";
     private static final int BOARD_SIZE = 64;
@@ -42,7 +47,7 @@ public class Network
         // Load data
         List<MultiDataSet> data = loadData();
         org.nd4j.linalg.dataset.MultiDataSet mainSet = org.nd4j.linalg.dataset.MultiDataSet.merge(data);
-        System.out.println("Loaded data");
+        logger.debug("Loaded data");
         int numInputs = (int) mainSet.getFeatures(0).size(1);
         int numOutputs = (int) mainSet.getLabels(0).size(1);
         int batchSize = 64;
@@ -89,14 +94,14 @@ public class Network
         ComputationGraphConfiguration config = mergedLayer.build();
         ComputationGraph graph = new ComputationGraph(config);
         graph.init();
-        System.out.println("Built network architecture");
+        logger.debug("Built network architecture");
         // Train network
-        System.out.println("Training network...");
+        logger.debug("Training network...");
         graph.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
         for (int epoch = 0; epoch < numEpochs; epoch++)
         {
-            System.out.println("Epoch " + epoch + " of " + numEpochs + "\r");
+            logger.debug("Epoch " + epoch + " of " + numEpochs + "\r");
             Iterator<MultiDataSet> iterator = data.iterator();
             IteratorMultiDataSetIterator trainIterator = new IteratorMultiDataSetIterator(iterator, batchSize);
             while (trainIterator.hasNext())
@@ -105,9 +110,9 @@ public class Network
                 graph.fit(dataSet);
             }
         }
-        System.out.println("\nTraining completed.");
+        logger.debug("\nTraining completed.");
         // Save model
-        System.out.println("Saving network...");
+        logger.debug("Saving network...");
         File locationToSave = new File("trainedMLP.zip");
         boolean saveUpdater = true;
         try
@@ -125,7 +130,7 @@ public class Network
         List<MultiDataSet> dataSetList = new ArrayList<>();
         try
         {
-            System.out.println("Loading data...");
+            logger.debug("Loading data...");
             CSVReader reader = new CSVReader(new FileReader("./archive/chessData.csv"));
             String[] nextLine = reader.readNext();
             while ((nextLine = reader.readNext()) != null && dataSetList.size() < 1000000)
@@ -164,7 +169,7 @@ public class Network
         {
             e.printStackTrace();
         }
-        System.out.println("Data sets size: " + dataSetList.size());
+        logger.debug("Data sets size: " + dataSetList.size());
         return dataSetList;
     }
     
