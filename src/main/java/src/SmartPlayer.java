@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
  */
 public class SmartPlayer extends Player
 {
-    private static final Logger logger = LogManager.getLogger(SmartPlayer.class);
+    private static final Logger logger = LogManager.getLogger(src.SmartPlayer.class);
 
     /**
      * Default constructor for Smart Player
