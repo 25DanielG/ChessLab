@@ -42,10 +42,7 @@ public class Network {
     private static final int INPUT_SIZE = 19 * 64; // 19 bitboards, 64 squares each
 
     public static void main(String[] args) {
-        List<MultiDataSet> data = loadData();
-        System.out.println(data.size());
-        org.nd4j.linalg.dataset.MultiDataSet mainSet = org.nd4j.linalg.dataset.MultiDataSet.merge(data);
-        logger.debug("Loaded data");
+        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64);
 
         int numInputs = INPUT_SIZE;
         int numOutputs = 1;
@@ -105,13 +102,12 @@ public class Network {
         graph.setListeners(new ScoreIterationListener(100));
         int numEpochs = 25;
         for (int epoch = 0; epoch < numEpochs; epoch++) {
-            logger.debug("Epoch " + epoch + " of " + numEpochs + "\r");
-            Iterator<MultiDataSet> iterator = data.iterator();
-            IteratorMultiDataSetIterator trainIterator = new IteratorMultiDataSetIterator(iterator, batchSize);
-            while (trainIterator.hasNext()) {
-                MultiDataSet dataSet = trainIterator.next();
+            System.out.println("Epoch " + epoch + " of " + numEpochs + "\r");
+            while (iterator.hasNext()) {
+                MultiDataSet dataSet = iterator.next();
                 graph.fit(dataSet);
             }
+            iterator.reset();
         }
         System.out.println("\nTraining completed.");
         System.out.println("Saving network...");
@@ -149,7 +145,7 @@ public class Network {
         return dataSetList;
     }
 
-    private static double[][][] fenToBitboards(String fen) {
+    public static double[][][] fenToBitboards(String fen) {
         double[][][] bitboards = new double[19][8][8]; // 19 layers, each 8x8
     
         Map<Character, Integer> pieceToBitboardIndex = new HashMap<>();
@@ -217,7 +213,7 @@ public class Network {
         return 8 * rank + file;
     }
 
-    private static double parseValue(String valueStr) {
+    public static double parseValue(String valueStr) {
         if (valueStr.contains("#")) {
             valueStr = "5000";
         } else if (valueStr.contains("+")) {
