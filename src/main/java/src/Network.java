@@ -42,11 +42,10 @@ public class Network {
     private static final int INPUT_SIZE = 19 * 64; // 19 bitboards, 64 squares each
 
     public static void main(String[] args) {
-        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64);
+        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64, 10);
 
         int numInputs = INPUT_SIZE;
         int numOutputs = 1;
-        int batchSize = 64;
         double dropoutProb = 0.1;
 
         NeuralNetConfiguration.Builder layerBuilder = new NeuralNetConfiguration.Builder()

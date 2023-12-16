@@ -18,10 +18,24 @@ public class MemoryIterator implements MultiDataSetIterator {
     private int batchSize;
     private boolean hasNext = true;
     private String filename;
+    private int lineno = 0;
+    private int batchLimit;
 
     public MemoryIterator(String filename, int batchSize) {
         this.batchSize = batchSize;
         this.filename = filename;
+        this.batchLimit = 0;
+        try {
+            this.reader = new CSVReader(new FileReader(filename));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public MemoryIterator(String filename, int batchSize, int batchLimit) {
+        this.batchSize = batchSize;
+        this.filename = filename;
+        this.batchLimit = batchLimit;
         try {
             this.reader = new CSVReader(new FileReader(filename));
         } catch (IOException e) {
@@ -31,6 +45,9 @@ public class MemoryIterator implements MultiDataSetIterator {
 
     @Override
     public boolean hasNext() {
+        if (batchLimit != 0) {
+            return hasNext && lineno < (batchLimit * batchSize);
+        }
         return hasNext;
     }
 
@@ -39,6 +56,7 @@ public class MemoryIterator implements MultiDataSetIterator {
         if (!hasNext) {
             throw new NoSuchElementException();
         }
+        ++lineno;
 
         List<MultiDataSet> dataSetList = new ArrayList<>();
         try {
