@@ -9,10 +9,14 @@ import java.util.*;
  */
 public class Board extends BoundedGrid<Piece>
 {
+	public Color active;
+	public int fullMove;
+
 	// Constructs a new Board with the given dimensions
 	public Board()
 	{
 		super(8, 8);
+		active = null;
 	}
 
 	public Board(Board b)
@@ -359,5 +363,59 @@ public class Board extends BoundedGrid<Piece>
 			}
 		}
 		return rights.equals("") ? "-" : rights;
+	}
+
+	public double[][][] boardToBitboards() {
+		double[][][] bitboards = new double[19][8][8]; // 19 layers, 8x8
+		String castlingRights = this.getCastlingRights();
+		int activeColorLayer = this.active.equals(Color.WHITE) ? 0 : 1;
+		int fullMoveNumber = this.fullMove;
+
+		for (int r = 0; r < 8; r++) {
+			for (int c = 0; c < 8; c++) {
+				Location loc = new Location(r, c);
+				Piece piece = this.get(loc);
+	
+				if (piece != null) {
+					int layerIndex = getPieceLayerIndex(piece);
+					if (layerIndex != -1) {
+						bitboards[layerIndex][r][c] = 1;
+					}
+				}
+
+				// castling
+				if (castlingRights.contains("K")) bitboards[12][r][c] = 1;
+				if (castlingRights.contains("Q")) bitboards[13][r][c] = 1;
+				if (castlingRights.contains("k")) bitboards[14][r][c] = 1;
+				if (castlingRights.contains("q")) bitboards[15][r][c] = 1;
+
+				// active color
+				bitboards[17][r][c] = activeColorLayer;
+
+				// full move counter
+				bitboards[18][r][c] = fullMoveNumber;
+
+				// en passant not completed
+			}
+		}
+	
+		return bitboards;
+	}
+	
+	private static int getPieceLayerIndex(Piece piece) {
+		if (piece instanceof Pawn) {
+			return piece.getColor().equals(Color.WHITE) ? 0 : 6;
+		} else if (piece instanceof Knight) {
+			return piece.getColor().equals(Color.WHITE) ? 1 : 7;
+		} else if (piece instanceof Bishop) {
+			return piece.getColor().equals(Color.WHITE) ? 2 : 8;
+		} else if (piece instanceof Rook) {
+			return piece.getColor().equals(Color.WHITE) ? 3 : 9;
+		} else if (piece instanceof Queen) {
+			return piece.getColor().equals(Color.WHITE) ? 4 : 10;
+		} else if (piece instanceof King) {
+			return piece.getColor().equals(Color.WHITE) ? 5 : 11;
+		}
+		return -1;
 	}
 }

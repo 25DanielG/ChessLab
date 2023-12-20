@@ -56,12 +56,12 @@ public class MemoryIterator implements MultiDataSetIterator {
         if (!hasNext) {
             throw new NoSuchElementException();
         }
-        ++lineno;
 
         List<MultiDataSet> dataSetList = new ArrayList<>();
         try {
             String[] nextLine = null;
             while (dataSetList.size() < batchSize && (nextLine = reader.readNext()) != null) {
+                ++lineno;
                 double[][][] bitboards = Network.fenToBitboards(nextLine[0]);
                 double value = Network.parseValue(nextLine[1]);
                 double output = 2.0 * (value / 5000.0) - 1.0;

@@ -31,13 +31,12 @@ public class SmartPlayer extends Player
      */
     public Move nextMove() 
     {
-        Object[] best = (findBestMove(6, 15000));
-        logger.debug("---------------------------------");
-        logger.debug("Score: " + best[0] + ", Depth: " + best[2]);
-        String FEN = getBoard().toFEN(getColor().equals(Color.WHITE) ? Color.BLACK : Color.WHITE);
-        logger.debug("Board: " + FEN);
-        logger.debug("Network Score: " + src.Score.networkScore(FEN));
-        logger.debug("---------------------------------");
+        Object[] best = (findBestMove(5, 15000));
+        System.out.println("---------------------------------");
+        System.out.println("Score: " + best[0] + ", Depth: " + best[2]);
+        double[][][] bitboards = getBoard().boardToBitboards();
+        System.out.println("Network Score: " + src.Score.networkScore(bitboards));
+        System.out.println("---------------------------------");
         return (Move) best[1];
     }
 
@@ -104,7 +103,7 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
+            return new Object[] {Score.networkScore(getBoard().boardToBitboards())};
         }
         Color oppositeColor = getColor().equals(Color.BLACK) ? Color.WHITE : Color.BLACK;
         Vector<Move> moves = getBoard().allMoves(oppositeColor);
@@ -152,7 +151,7 @@ public class SmartPlayer extends Player
     {
         if (depth <= 0)
         {
-            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
+            return new Object[] {Score.networkScore(getBoard().boardToBitboards())};
         }
         if (Thread.currentThread().isInterrupted())
         {
@@ -215,10 +214,10 @@ public class SmartPlayer extends Player
         if (depth <= 0)
         {
             // return new Object[] {Score.mainScore(getBoard(), getColor()), null};
-            return new Object[] {Score.networkScore(getBoard().toFEN(getColor()))};
+            return new Object[] {Score.networkScore(getBoard().boardToBitboards())};
         }
         // int stand_pat = Score.mainScore(getBoard(), getColor());
-        int stand_pat = Score.networkScore(getBoard().toFEN(getColor()));
+        int stand_pat = Score.networkScore(getBoard().boardToBitboards());
         if (stand_pat >= beta)
         {
             return new Object[] {stand_pat, null};
@@ -234,7 +233,7 @@ public class SmartPlayer extends Player
         {
             getBoard().executeMove(move);
             // int score = -Score.mainScore(getBoard(), getColor());
-            int score = -Score.networkScore(getBoard().toFEN(getColor()));
+            int score = -Score.networkScore(getBoard().boardToBitboards());
             getBoard().undoMove(move);
             if (score >= beta)
             {

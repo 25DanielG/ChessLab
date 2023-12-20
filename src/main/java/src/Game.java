@@ -7,7 +7,7 @@ public class Game
 {
     static King wKing, bKing;
     static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
-    static final boolean train = true;
+    static final boolean train = false;
     /**
      * The main method of the chess game that sets up the chess board and the two players.
      * @param args optional arguments that can be passed via the terminal
@@ -96,6 +96,7 @@ public class Game
      */
     private static void nextTurn(Board board, BoardDisplay display, Player player)
     {
+        board.active = player.getColor();
         display.setTitle(player.getName());
         Move next = player.nextMove();
         board.executeMove(next);
@@ -133,6 +134,7 @@ public class Game
             display.showBoard();
             nextTurn(board, display, black);
             display.showBoard();
+            ++board.fullMove;
         }
         if (wKing.getLocation() == null)
         {

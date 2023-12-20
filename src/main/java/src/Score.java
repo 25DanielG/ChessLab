@@ -8,10 +8,11 @@ public class Score
 {
     public static ComputationGraph network;
 
-    public static int networkScore(String FEN)
+    public static int networkScore(double[][][] bitboards)
     {
-        return (int) (src.Network.score(FEN, network) * 100000);
+        return (int) (src.Network.score(bitboards, network) * 100000);
     }
+    
     /**
      * The scoring function to score a boards position, the scoring function relies on a more
      *      efficient piece evaluation point system as well as the mobility of each piece.

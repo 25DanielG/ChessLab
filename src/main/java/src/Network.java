@@ -42,7 +42,7 @@ public class Network {
     private static final int INPUT_SIZE = 19 * 64; // 19 bitboards, 64 squares each
 
     public static void main(String[] args) {
-        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64, 10);
+        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64);
 
         int numInputs = INPUT_SIZE;
         int numOutputs = 1;
@@ -225,12 +225,10 @@ public class Network {
         return ModelSerializer.restoreComputationGraph(path);
     }
 
-    public static double score(String fen, ComputationGraph network) {
-        throw new RuntimeException("Implement scoring function");
-        // double[][][] bitboards = fenToBitboards(fen);
-        // INDArray inputArray = Nd4j.createFromArray(bitboards).reshape(1, INPUT_SIZE);
+    public static double score(double[][][] bitboards, ComputationGraph network) {
+        INDArray inputArray = Nd4j.create(bitboards).reshape(1, 19, 8, 8);
 
-        // INDArray output = network.output(inputArray)[0];
-        // return output.getDouble(0);
+        INDArray output = network.output(inputArray)[0];
+        return output.getDouble(0);
     }
 }
