@@ -1,6 +1,17 @@
-package src;
+package src.board;
+
 import java.awt.*;
 import java.util.*;
+import src.Game;
+import src.Location;
+import src.Move;
+import src.piece.Bishop;
+import src.piece.King;
+import src.piece.Knight;
+import src.piece.Pawn;
+import src.piece.Piece;
+import src.piece.Queen;
+import src.piece.Rook;
 
 /**
  * A class that represesents a rectangular game board, containing Piece objects.
@@ -11,12 +22,14 @@ public class Board extends BoundedGrid<Piece>
 {
 	public Color active;
 	public int fullMove;
+	public ArrayList<String> sequence;
 
 	// Constructs a new Board with the given dimensions
 	public Board()
 	{
 		super(8, 8);
 		active = null;
+		this.sequence = new ArrayList<String>();
 	}
 
 	public Board(Board b)
@@ -93,9 +106,8 @@ public class Board extends BoundedGrid<Piece>
 				{
 					Move m = new Move(cur, to);
 					this.executeMove(m);
-					int score = Score.quickScore(this, color);
 					this.undoMove(m);
-                    moves.add(new Move(cur, to, score));
+                    moves.add(new Move(cur, to));
 				}
             }
         }
@@ -120,80 +132,13 @@ public class Board extends BoundedGrid<Piece>
 				{
                     Move m = new Move(cur, to);
 					this.executeMove(m);
-					int score = Score.quickScore(this, color);
 					this.undoMove(m);
-                    moves.add(new Move(cur, to, score));
+                    moves.add(new Move(cur, to));
 				}
             }
         }
         return moves;
     }
-
-	/**
-	 * Returns all strategic possible moves in a chess board by looping through all pieces and
-	 * 		their possible moves while scoring the move based on calculateMoveScore method.
-	 * @param color the color of the pieces to look for all possible moves
-	 * @return type ArrayList<Move> the list of all strategic moves
-	 */
-	public Vector<Move> strategicMoves(Color color)
-	{
-		Vector<Move> moves = this.allMoves(color);
-		Vector<Move> strategicMoves = new Vector<Move>();
-		int previousScore = Score.score(this, color);
-		moves.parallelStream().forEach(m ->
-		{
-			Board boardCopy = new Board(this);
-			Move newMove = new Move(boardCopy.get(m.getSource()), m.getDestination(), Score.quickScore(this, color));
-			boardCopy.executeMove(newMove);
-			int score = Score.score(boardCopy, color);
-			if (score - previousScore > 10)
-			{
-				m.setScore(score - previousScore);
-				synchronized (strategicMoves)
-				{
-					strategicMoves.add(m);
-				}
-			}
-		});
-		strategicMoves.sort((m1, m2) -> Integer.compare(m2.getScore(), m1.getScore()));
-		return strategicMoves;
-	}
-	
-	/**
-	 * Calculates the score of a move based on value of piece being moved, captured piece (if any)
-	 * 		, center squares, and edge squares.
-	 * @param move the Move to score
-	 * @return an int representing score
-	 */
-	private int calculateMoveScore(Move move)
-	{
-		Piece piece = move.getPiece();
-		Location destination = move.getDestination();
-		int score = 0;
-		// value of piece moved
-		score += piece.getValue();
-		// value of captured piece
-		Piece victim = move.getVictim();
-		if (victim != null)
-		{
-			score += victim.getValue();
-		}
-		// value of destination square
-		int row = destination.getRow();
-		int col = destination.getCol();
-		int center = this.getNumCols() / 2;
-		if (row == center && col == center)
-		{
-			// center square
-			score += 2;
-		}
-		else if (row == center || col == center)
-		{
-			// - edge square
-			score += 1;
-		}
-		return score;
-	}	
 
 	/**
 	 * Executes a move by checking if it is valid or not and then moving the piece as well as

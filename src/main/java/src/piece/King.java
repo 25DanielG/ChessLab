@@ -1,6 +1,7 @@
-package src;
+package src.piece;
 import java.awt.*;
 import java.util.*;
+import src.Location;
 
 /**
  * A class that describes the King piece of a chess set. It overrides a method

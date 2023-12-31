@@ -1,17 +1,31 @@
 #### A minimax chess player w/ 
- - Move ordering
+ - Move ordering: MVVLVA, History heuristics
  - Alpha-beta pruning
- - Quiescence Search (Depth 5)
+ - Null Move pruning
+ - Futility Sruning
+ - Quiescence Search
  - Iterative Deepening
+ - Aspiration windows
+ - Multi-principal variations
  - Multithreaded
- - Fast Evaluation (removes obviously bad positions before exploration)
+ - Fast bitboard
 
+#### Beginning Game
+ - Uses an opening book engine w/ ~2k theoretical openings and lines
+
+#### End Game
+ - Tablebase
 
 #### Scoring function based on
  - Piece value
  - Pawn structure
  - Piece mobility
  - Piece development
+ - King safety
+ - Rook's open files
+ - Center control
+ - Bishop pairs
+ - Outpost knights
 
 ##### Dependencies
 Maven

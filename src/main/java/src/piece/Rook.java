@@ -1,7 +1,8 @@
-package src;
+package src.piece;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
+import src.Location;
 
 /**
  * A class that describes the Rook piece of a chess set. It overrides a method

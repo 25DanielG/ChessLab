@@ -1,7 +1,10 @@
-package src;
+package src.player;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Vector;
+import src.Move;
+import src.board.Board;
+import src.board.BoardDisplay;
 
 /**
  * A HumanPlayer that plays chess by accepting inputed moves from the user.

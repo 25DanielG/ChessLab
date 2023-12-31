@@ -1,5 +1,7 @@
-package src;
+package src.player;
 import java.awt.Color;
+import src.Move;
+import src.board.Board;
 
 /**
  * A player abstract class that describes how a player class should look like, provides

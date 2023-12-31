@@ -2,11 +2,25 @@ package src;
 import java.awt.*;
 import java.io.IOException;
 import org.deeplearning4j.nn.graph.ComputationGraph;
+import src.board.Bitboard;
+import src.board.Board;
+import src.board.BoardDisplay;
+import src.eval.*;
+import src.piece.Bishop;
+import src.piece.King;
+import src.piece.Knight;
+import src.piece.Pawn;
+import src.piece.Piece;
+import src.piece.Queen;
+import src.piece.Rook;
+import src.player.HumanPlayer;
+import src.player.Player;
+import src.player.SmartPlayer;
 
 public class Game
 {
-    static King wKing, bKing;
-    static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
+    public static King wKing, bKing;
+    public static Rook wRookKing, wRookQueen, bRookKing, bRookQueen;
     static final boolean train = false;
     /**
      * The main method of the chess game that sets up the chess board and the two players.
@@ -70,6 +84,7 @@ public class Game
         BoardDisplay display = new BoardDisplay(board);
         wKing = (King) whiteKing;
         bKing = (King) blackKing;
+        
         ComputationGraph network;
         try
         {
@@ -81,10 +96,8 @@ public class Game
             return;
         }
         Score.network = network;
-        play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
-        // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new HumanPlayer(board, display, Color.BLACK, "Human"));
-        // play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human 1"), new HumanPlayer(board, display, Color.BLACK, "Human 2"));
-        // play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
+        // play(board, display, new HumanPlayer(board, display, Color.WHITE, "Human"), new SmartPlayer(board, Color.BLACK, "SmartPlayer"));
+        play(board, display, new SmartPlayer(board, Color.WHITE, "SmartPlayer"), new HumanPlayer(board, display, Color.BLACK, "Human"));;
     }
 
     /**
@@ -99,6 +112,7 @@ public class Game
         board.active = player.getColor();
         display.setTitle(player.getName());
         Move next = player.nextMove();
+        board.sequence.add(next.toString());
         board.executeMove(next);
         if (next.getPiece() instanceof King)
 		{
@@ -137,12 +151,10 @@ public class Game
             ++board.fullMove;
         }
         if (wKing.getLocation() == null)
-        {
             System.out.println(black.getName() + " wins!");
-        }
         else
-        {
             System.out.println(white.getName() + " wins!");
-        }
+        if (white instanceof SmartPlayer) ((SmartPlayer) white).shutdown();
+        if (black instanceof SmartPlayer) ((SmartPlayer) black).shutdown();
     }
 }

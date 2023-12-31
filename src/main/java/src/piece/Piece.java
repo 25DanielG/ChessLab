@@ -1,11 +1,15 @@
-package src;
+package src.piece;
 import java.awt.*;
 import java.util.*;
+import src.Game;
+import src.Location;
+import src.Move;
+import src.board.Board;
 
 public abstract class Piece implements Cloneable
 {
 	//the board this piece is on
-	private Board board;
+	public Board board;
 
 	//the location of this piece on the board
 	private Location location;

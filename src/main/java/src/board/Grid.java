@@ -1,4 +1,4 @@
-package src;
+package src.board;
 /*
  * AP(r) Computer Science GridWorld Case Study:
  * Copyright(c) 2002-2006 College Entrance Examination Board
@@ -19,6 +19,7 @@ package src;
  */
 
 import java.util.ArrayList;
+import src.Location;
 
 /**
  * <code>Grid</code> provides an interface for a two-dimensional, grid-like

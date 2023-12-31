@@ -1,13 +1,16 @@
 package src;
+
+import src.piece.*;
+
 // Represents a single move, in which a piece moves to a destination location.
 // Since a move can be undone, also keeps track of the source location and any captured victim.
 public class Move
 {
-	private Piece piece;          //the piece being moved
-	private Location source;      //the location being moved from
-	private Location destination; //the location being moved to
-	private Piece victim;         //any captured piece at the destination
-	private int score;			  //score instance variable used to compare strategic moves
+	private Piece piece;          // the piece being moved
+	private Location source;      // the location being moved from
+	private Location destination; // the location being moved to
+	private Piece victim;         // any captured piece at the destination
+	private int score;			  // score instance variable used to compare strategic moves
 
 	// Constructs a new move for moving the given piece to the given destination.
 	public Move(Piece piece, Location destination)
@@ -16,6 +19,16 @@ public class Move
 		this.source = piece.getLocation();
 		this.destination = destination;
 		this.victim = piece.getBoard().get(destination);
+
+		if (source.equals(destination))
+			throw new IllegalArgumentException("Both source and dest are " + source);
+	}
+
+	public Move(Piece piece, Location source, Location destination)
+	{
+		this.piece = piece;
+		this.source = source;
+		this.destination = destination;
 
 		if (source.equals(destination))
 			throw new IllegalArgumentException("Both source and dest are " + source);
@@ -76,10 +89,11 @@ public class Move
 	{
 		String capture = "";
 		if (victim != null)
-		{
 			capture = "x";
-		}
-		return "" + piece + capture + ((char) (97 + destination.getCol())) + (8 - destination.getRow());
+		String notation = "" + piece + capture + ((char) (97 + destination.getCol())) + (8 - destination.getRow());
+		if (capture != "" && piece instanceof Pawn)
+			notation = "" + ((char) (97 + source.getCol())) + "x" + ((char) (97 + destination.getCol())) + (8 - destination.getRow());
+		return notation;
 	}
 
 	// Returns true if this move is equivalent to the given one.

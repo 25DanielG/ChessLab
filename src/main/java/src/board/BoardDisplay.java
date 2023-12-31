@@ -1,7 +1,10 @@
-package src;
+package src.board;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import src.Location;
+import src.Move;
+import src.piece.Piece;
 
 // Used to display the contents of a game board
 public class BoardDisplay implements ActionListener

@@ -1,4 +1,4 @@
-package src;
+package src.eval;
 
 import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;

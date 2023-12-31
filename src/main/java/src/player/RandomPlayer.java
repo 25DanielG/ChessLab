@@ -1,7 +1,9 @@
-package src;
+package src.player;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Vector;
+import src.Move;
+import src.board.Board;
 
 /**
  * A RandomPlayer that plays chess by playing random moves.

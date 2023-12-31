@@ -1,4 +1,4 @@
-package src;
+package src.eval;
 
 import org.deeplearning4j.datasets.iterator.IteratorMultiDataSetIterator;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
@@ -23,7 +23,6 @@ import org.deeplearning4j.nn.conf.graph.MergeVertex;
 import org.deeplearning4j.nn.conf.graph.PreprocessorVertex;
 import org.deeplearning4j.nn.graph.ComputationGraph;
 import com.opencsv.CSVReader;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.io.File;
@@ -40,9 +39,14 @@ public class Network {
     private static final Logger logger = LogManager.getLogger(Network.class);
     private static final String path = "network.zip";
     private static final int INPUT_SIZE = 19 * 64; // 19 bitboards, 64 squares each
+    private static double minLoss = Double.MAX_VALUE;
+    private static int nonImprove = 0;
+    private static final int numEpochs = 25;
+    private static final int patience = 5;
 
     public static void main(String[] args) {
-        MemoryIterator iterator = new MemoryIterator("./archive/chessData.csv", 64);
+        MemoryIterator trainIterator = new MemoryIterator("./archive/chessData.csv", 64);
+        MemoryIterator validationIterator = new MemoryIterator("./archive/random_evals.csv", 64, 2500);
 
         int numInputs = INPUT_SIZE;
         int numOutputs = 1;
@@ -99,15 +103,45 @@ public class Network {
 
         System.out.println("Training network...");
         graph.setListeners(new ScoreIterationListener(100));
-        int numEpochs = 25;
-        for (int epoch = 0; epoch < numEpochs; epoch++) {
+
+        for (int epoch = 0; epoch < numEpochs; ++epoch) {
             System.out.println("Epoch " + epoch + " of " + numEpochs + "\r");
-            while (iterator.hasNext()) {
-                MultiDataSet dataSet = iterator.next();
+    
+            // train
+            while (trainIterator.hasNext()) {
+                MultiDataSet dataSet = trainIterator.next();
                 graph.fit(dataSet);
             }
-            iterator.reset();
+            trainIterator.reset();
+    
+            // validate
+            double validationLoss = 0;
+            int validationSetSize = 0;
+
+            while (validationIterator.hasNext()) {
+                MultiDataSet dataSet = validationIterator.next();
+                validationLoss += graph.score(dataSet);
+                ++validationSetSize;
+            }
+            validationIterator.reset();
+            validationLoss /= validationSetSize;
+    
+            System.out.println("Current validation loss: " + validationLoss);
+    
+            // early stopping
+            if (validationLoss < minLoss) {
+                minLoss = validationLoss;
+                nonImprove = 0;
+                saveNetwork(graph, new File(path), true); // save network
+            } else {
+                ++nonImprove;
+                if (nonImprove >= patience) {
+                    System.out.println("Early stopping triggered at epoch " + epoch);
+                    break;
+                }
+            }
         }
+
         System.out.println("\nTraining completed.");
         System.out.println("Saving network...");
         saveNetwork(graph, new File(path), true);

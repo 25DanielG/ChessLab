@@ -1,4 +1,4 @@
-package src;
+package src.board;
 /*
  * AP(r) Computer Science GridWorld Case Study:
  * Copyright(c) 2005-2006 Cay S. Horstmann (http://horstmann.com)
@@ -16,6 +16,7 @@ package src;
  */
 
 import java.util.ArrayList;
+import src.Location;
 
 /**
  * <code>AbstractGrid</code> contains the methods that are common to grid
